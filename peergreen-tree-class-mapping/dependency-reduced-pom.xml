@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>deployment-repository</artifactId>
+    <groupId>com.peergreen.deployment</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>peergreen-tree-class-mapping</artifactId>
+  <name>Peergreen Tree Class Mapping</name>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <filters>
+                <filter>
+                  <artifact>com.peergreen.tree:peergreen-tree</artifact>
+                </filter>
+              </filters>
+              <relocations>
+                <relocation>
+                  <pattern>com.peergreen.tree.graph</pattern>
+                  <shadedPattern>com.peergreen.deployment.repository.graph</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.peergreen.tree.Graph</pattern>
+                  <shadedPattern>com.peergreen.deployment.repository.Graph</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.peergreen.tree.node</pattern>
+                  <shadedPattern>com.peergreen.deployment.repository.node</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.peergreen.tree.Node</pattern>
+                  <shadedPattern>com.peergreen.deployment.repository.Node</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+

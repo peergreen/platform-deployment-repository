@@ -1,0 +1,1 @@
+Private-Package: com.peergreen.deployment.repository.base, com.peergreen.deployment.repository.directory, com.peergreen.deployment.repository.maven

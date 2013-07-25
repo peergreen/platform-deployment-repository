@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2013 Peergreen S.A.S. All rights reserved.
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>deployment-repository</artifactId>
+    <groupId>com.peergreen.deployment</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <name>Peergreen Tree Class Mapping</name>
+  <artifactId>peergreen-tree-class-mapping</artifactId>
+  <packaging>jar</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.peergreen.tree</groupId>
+      <artifactId>peergreen-tree</artifactId>
+      <version>1.0.1</version>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <filters>
+                <filter>
+                  <artifact>com.peergreen.tree:peergreen-tree</artifact>
+                </filter>
+              </filters>
+              <relocations>
+                <relocation>
+                  <pattern>com.peergreen.tree.graph</pattern>
+                  <shadedPattern>com.peergreen.deployment.repository.graph</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.peergreen.tree.Graph</pattern>
+                  <shadedPattern>com.peergreen.deployment.repository.Graph</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.peergreen.tree.node</pattern>
+                  <shadedPattern>com.peergreen.deployment.repository.node</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.peergreen.tree.Node</pattern>
+                  <shadedPattern>com.peergreen.deployment.repository.Node</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
