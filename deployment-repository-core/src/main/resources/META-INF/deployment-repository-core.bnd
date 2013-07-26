@@ -1,0 +1,2 @@
+Private-Package org.apache.lucene.*, org.apache.maven.index.*, org.apache.maven.wagon.*, org.codehaus.plexus.*, org.sonatype.aether.*, com.peergreen.deployment.repository.graph.*, com.peergreen.deployment.repository.node.*,
+Import-Package *;resolution:=optional
