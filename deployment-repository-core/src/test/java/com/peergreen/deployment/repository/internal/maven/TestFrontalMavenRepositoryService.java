@@ -11,7 +11,6 @@
 package com.peergreen.deployment.repository.internal.maven;
 
 import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.maven.MavenDSLQuery;
 import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
 import com.peergreen.deployment.repository.view.Facade;
@@ -74,7 +73,7 @@ public class TestFrontalMavenRepositoryService {
 
     @Test
     public void testFetchArtifactsFromTwoRepositories() {
-        IndexerGraph<MavenNode> graph = frontalMavenRepositoryService.list(new MavenDSLQuery());
+        IndexerGraph<MavenNode> graph = frontalMavenRepositoryService.list();
         Assert.assertEquals(graph.getNodes().size(), 2);
         Assert.assertNotNull(graph.getNode("Peergreen Public Repository"));
         Assert.assertNotNull(graph.getNode("OW2 Public Repository"));

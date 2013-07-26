@@ -11,7 +11,8 @@
 package com.peergreen.deployment.repository.internal.maven;
 
 import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.maven.AbstractDSLQuery;
+import com.peergreen.deployment.repository.internal.search.BaseQueryVisitor;
+import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
 import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.MavenRepositoryService;
 import com.peergreen.deployment.repository.internal.base.AttributesName;
@@ -74,8 +75,6 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
     private IndexUpdater indexUpdater;
     private Wagon wagon;
     private IndexingContext context;
-//    private final GenericVersionScheme versionScheme = new GenericVersionScheme();
-//    private QueryParser queryParser;
 
     @Validate
     public void init() throws PlexusContainerException, ComponentLookupException, IOException {
@@ -83,7 +82,6 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         indexer = plexusContainer.lookup(Indexer.class);
         indexUpdater = plexusContainer.lookup(IndexUpdater.class);
         wagon = plexusContainer.lookup( Wagon.class, "http" );
-//        queryParser = new QueryParser(org.apache.lucene.util.Version.LUCENE_36, "g", new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_36));
 
         if (url.charAt(url.length() - 1) == '/') {
             url = url.substring(0, url.length() - 1);
@@ -181,7 +179,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         return graph;
     }
 
-    public IndexerGraph<MavenNode> list(AbstractDSLQuery query) {
+    public IndexerGraph<MavenNode> list(com.peergreen.deployment.repository.search.Query... queries) {
         IndexerGraph<MavenNode> graph = new IndexerGraph<>();
         try {
             // add root element
@@ -189,7 +187,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
             IndexerNode<MavenNode> rootNode = new IndexerNode<MavenNode>(root);
             graph.addNode(rootNode);
 
-            for (ArtifactInfo artifactInfo : process(createQuery(query))) {
+            for (ArtifactInfo artifactInfo : process(createQuery(queries))) {
                 // add GroupId
                 String[] splitGroupId = splitGroupId(artifactInfo.groupId);
                 IndexerNode<MavenNode> currentNode = rootNode;
@@ -199,12 +197,13 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                         currentNode = node;
                     } else {
                         URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + aSplitGroupId);
-                        MavenNode newNodeData = new MavenNode(aSplitGroupId, newNodeUri, ArtifactInfo.GROUP_ID, artifactInfo);
+                        MavenNode newNodeData = new MavenNode(aSplitGroupId, newNodeUri, ArtifactInfo.GROUP_ID, null);
                         IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                         currentNode.addChild(newNode);
                         currentNode = newNode;
                     }
                 }
+                currentNode.getData().setArtifactInfo(new MavenArtifactInfo(artifactInfo.groupId, null, null, null));
 
                 // add ArtifactId
                 IndexerNode<MavenNode> artifactNode = currentNode.getNode(artifactInfo.artifactId);
@@ -212,7 +211,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode = artifactNode;
                 } else {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + artifactInfo.artifactId);
-                    MavenNode newNodeData = new MavenNode(artifactInfo.artifactId, newNodeUri, ArtifactInfo.ARTIFACT_ID, artifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(artifactInfo.groupId, artifactInfo.artifactId, null, null);
+                    MavenNode newNodeData = new MavenNode(artifactInfo.artifactId, newNodeUri, ArtifactInfo.ARTIFACT_ID, mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                     currentNode = newNode;
@@ -224,7 +224,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode = versionNode;
                 } else {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + artifactInfo.version);
-                    MavenNode newNodeData = new MavenNode(artifactInfo.version, newNodeUri, ArtifactInfo.VERSION, artifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, null);
+                    MavenNode newNodeData = new MavenNode(artifactInfo.version, newNodeUri, ArtifactInfo.VERSION, mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                     currentNode = newNode;
@@ -245,7 +246,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                 IndexerNode<MavenNode> fileNode = currentNode.getNode(filename.toString());
                 if (fileNode == null) {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + filename.toString());
-                    MavenNode newNodeData = new MavenNode(filename.toString(), newNodeUri, "file", artifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, artifactInfo.classifier);
+                    MavenNode newNodeData = new MavenNode(filename.toString(), newNodeUri, "file", mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                 }
@@ -283,39 +285,21 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         return new InternalAttributes(attributes);
     }
 
-    private Query createQuery(AbstractDSLQuery mavenDSLQuery) {
+    protected Query createQuery(com.peergreen.deployment.repository.search.Query[] queries) {
         BooleanQuery query = new BooleanQuery();
         // gets all packaging
         Query q = new WildcardQuery(new Term(ArtifactInfo.PACKAGING, "*"));
         query.add(q, BooleanClause.Occur.SHOULD);
-        if (mavenDSLQuery.getQuery() != null) query.add(mavenDSLQuery.getQuery(), BooleanClause.Occur.MUST);
+
+        // Transform Queries
+        for(com.peergreen.deployment.repository.search.Query pQuery : queries) {
+            BaseQueryVisitor visitor = new BaseQueryVisitor();
+            pQuery.walk(visitor);
+            query.add(visitor.getQuery(), BooleanClause.Occur.MUST);
+        }
+
         return query;
     }
-
-//    private ArtifactInfoFilter createFilter(String filter) throws InvalidVersionSpecificationException {
-//        MavenDSLQuery mavenDSLQuery = new MavenDSLQuery();
-//        return createFilter(mavenDSLQuery);
-//    }
-//
-//    private ArtifactInfoFilter createFilter(MavenDSLQuery mavenDSLQuery) throws InvalidVersionSpecificationException {
-//        final Version versionMin = (mavenDSLQuery.getVersionMin() != null) ? versionScheme.parseVersion(mavenDSLQuery.getVersionMin()) : null;
-//        final Version versionMax = (mavenDSLQuery.getVersionMax() != null) ? versionScheme.parseVersion(mavenDSLQuery.getVersionMax()) : null;
-//        return new ArtifactInfoFilter() {
-//            @Override
-//            public boolean accepts(IndexingContext ctx, ArtifactInfo ai) {
-//                try {
-//                    Version version = versionScheme.parseVersion(ai.version);
-//                    if (versionMin == null && versionMax == null) return true;
-//                    else if (versionMin == null) return version.compareTo(versionMax) <= 0;
-//                    else if (versionMax == null) return version.compareTo(versionMin) >= 0;
-//                    else return version.compareTo(versionMin) >= 0 && version.compareTo(versionMax) <= 0;
-//                } catch (InvalidVersionSpecificationException e) {
-//                    // do something here? be safe and include?
-//                    return true;
-//                }
-//            }
-//        };
-//    }
 
     private IteratorSearchResponse process(Query query) throws IOException {
         final IteratorSearchRequest request = new IteratorSearchRequest(query, Collections.singletonList(context));

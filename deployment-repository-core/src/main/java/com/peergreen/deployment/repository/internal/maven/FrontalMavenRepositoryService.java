@@ -12,7 +12,6 @@ package com.peergreen.deployment.repository.internal.maven;
 
 import com.peergreen.deployment.repository.Attributes;
 import com.peergreen.deployment.repository.BaseNode;
-import com.peergreen.deployment.repository.maven.AbstractDSLQuery;
 import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.MavenRepositoryService;
 import com.peergreen.deployment.repository.Node;
@@ -20,6 +19,8 @@ import com.peergreen.deployment.repository.RepositoryType;
 import com.peergreen.deployment.repository.internal.base.AttributesName;
 import com.peergreen.deployment.repository.internal.base.InternalAttributes;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
+import com.peergreen.deployment.repository.search.Query;
+import com.peergreen.deployment.repository.search.RepositoryQuery;
 import com.peergreen.deployment.repository.view.Repository;
 import org.apache.felix.ipojo.annotations.Bind;
 import org.apache.felix.ipojo.annotations.Component;
@@ -54,15 +55,16 @@ public class FrontalMavenRepositoryService implements MavenRepositoryService {
         return new IndexerGraph<>(nodes);
     }
 
-    public IndexerGraph<MavenNode> list(AbstractDSLQuery query) {
+    public IndexerGraph<MavenNode> list(Query... queries) {
         Set<Node<MavenNode>> nodes = new HashSet<Node<MavenNode>>();
-        if (query.getRepositoryUrls() == null) {
+        String[] repositories = getRepositoryUrls(queries);
+        if (getRepositoryUrls(queries).length == 0) {
             for (Map.Entry<String, MavenRepositoryService> mavenRepositoryService : mavenRepositoryServices.entrySet()) {
-                nodes.addAll(mavenRepositoryService.getValue().list(query).getNodes());
+                nodes.addAll(mavenRepositoryService.getValue().list(queries).getNodes());
             }
         } else {
-            for (String repositoryUrl : query.getRepositoryUrls()) {
-                nodes.addAll(mavenRepositoryServices.get(repositoryUrl).list(query).getNodes());
+            for (String repositoryUrl : repositories) {
+                nodes.addAll(mavenRepositoryServices.get(repositoryUrl).list(queries).getNodes());
             }
         }
         return new IndexerGraph<>(nodes);
@@ -75,7 +77,20 @@ public class FrontalMavenRepositoryService implements MavenRepositoryService {
         return new InternalAttributes(attributes);
     }
 
-    public Object getUrls() {
+    private String[] getRepositoryUrls(Query[] queries) {
+        String[] repositories = new String[0];
+        for (Query query : queries) {
+            if (query instanceof RepositoryQuery) {
+                String[] queryRepositories = ((RepositoryQuery) query).getRepositories();
+                String[] tmp = new String[repositories.length + queryRepositories.length];
+                System.arraycopy(queryRepositories, 0, tmp, repositories.length, queryRepositories.length);
+                repositories = tmp;
+            }
+        }
+        return repositories;
+    }
+
+    private Object getUrls() {
         Collection<String> urls = new ArrayList<String>();
         for (Map.Entry<String, MavenRepositoryService> mavenRepositoryService : mavenRepositoryServices.entrySet()) {
             urls.add(mavenRepositoryService.getKey());

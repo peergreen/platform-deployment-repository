@@ -11,7 +11,6 @@
 package com.peergreen.deployment.repository.maven;
 
 import com.peergreen.deployment.repository.BaseNode;
-import org.apache.maven.index.ArtifactInfo;
 
 import java.net.URI;
 
@@ -20,10 +19,10 @@ import java.net.URI;
  */
 public class MavenNode extends BaseNode {
 
-    private ArtifactInfo artifactInfo;
+    private MavenArtifactInfo artifactInfo;
     private String type;
 
-    public MavenNode(String name, URI uri, String type, ArtifactInfo artifactInfo) {
+    public MavenNode(String name, URI uri, String type, MavenArtifactInfo artifactInfo) {
         super(name, uri);
         this.type = type;
         this.artifactInfo = artifactInfo;
@@ -33,7 +32,11 @@ public class MavenNode extends BaseNode {
         return type;
     }
 
-    public ArtifactInfo getArtifactInfo() {
+    public void setArtifactInfo(MavenArtifactInfo artifactInfo) {
+        this.artifactInfo = artifactInfo;
+    }
+
+    public MavenArtifactInfo getArtifactInfo() {
         return artifactInfo;
     }
 }

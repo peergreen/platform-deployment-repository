@@ -10,14 +10,12 @@
 
 package com.peergreen.deployment.repository;
 
-import com.peergreen.deployment.repository.Graph;
-import com.peergreen.deployment.repository.RepositoryService;
-import com.peergreen.deployment.repository.maven.AbstractDSLQuery;
 import com.peergreen.deployment.repository.maven.MavenNode;
+import com.peergreen.deployment.repository.search.Query;
 
 /**
  * @author Mohammed Boukada
  */
 public interface MavenRepositoryService extends RepositoryService {
-    Graph<MavenNode> list(AbstractDSLQuery query);
+    Graph<MavenNode> list(Query... queries);
 }

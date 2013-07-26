@@ -1,0 +1,26 @@
+package com.peergreen.deployment.repository.maven;
+
+import com.peergreen.deployment.repository.filter.Filter;
+import com.peergreen.deployment.repository.filter.StringFilter;
+import com.peergreen.deployment.repository.search.AttributeQuery;
+import com.peergreen.deployment.repository.search.Occur;
+import com.peergreen.deployment.repository.search.Query;
+
+/**
+ * @author Mohammed Boukada
+ */
+public class ClassifierQuery extends AbstractMavenQuery {
+
+    public ClassifierQuery(String groupId) {
+        super(groupId);
+    }
+
+    public ClassifierQuery(Filter filter) {
+        super(filter);
+    }
+
+    @Override
+    protected Query createAttributeQuery(StringFilter filter, Occur occur) {
+        return new AttributeQuery(MavenArtifactInfo.Type.CLASSIFIER, filter.getValue(), occur);
+    }
+}
