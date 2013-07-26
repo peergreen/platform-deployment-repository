@@ -1,2 +1,0 @@
-Export-Package org.apache.lucene.*, org.apache.maven.index.*, org.apache.maven.wagon.*, org.codehaus.plexus.*, org.sonatype.aether.*
-Import-Package *;resolution:=optional

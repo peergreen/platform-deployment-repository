@@ -25,7 +25,6 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>maven-indexer-deps</module>
     <module>peergreen-tree-class-mapping</module>
     <module>deployment-repository-api</module>
     <module>deployment-repository-core</module>
