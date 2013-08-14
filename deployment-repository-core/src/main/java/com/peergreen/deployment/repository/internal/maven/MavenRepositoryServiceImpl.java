@@ -127,11 +127,12 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         closeIndexingContext();
     }
 
+    @Override
     public IndexerGraph<BaseNode> list(String filter) {
         IndexerGraph<BaseNode> graph = new IndexerGraph<>();
         try {
             // add root element
-            BaseNode root = new BaseNode(name, new URI(url));
+            BaseNode root = new BaseNode(name, new URI(url), false);
             IndexerNode<BaseNode> rootNode = new IndexerNode<BaseNode>(root);
             graph.addNode(rootNode);
 
@@ -145,7 +146,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                         currentNode = node;
                     } else {
                         URI newNodeUri = new URI(url + "/" + aSplitGroupId);
-                        BaseNode newNodeData = new BaseNode(aSplitGroupId, newNodeUri);
+                        BaseNode newNodeData = new BaseNode(aSplitGroupId, newNodeUri, false);
                         IndexerNode<BaseNode> newNode = new IndexerNode<BaseNode>(newNodeData);
                         currentNode.addChild(newNode);
                         currentNode = newNode;
@@ -158,7 +159,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode = artifactNode;
                 } else {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + artifactInfo.artifactId);
-                    BaseNode newNodeData = new BaseNode(artifactInfo.artifactId, newNodeUri);
+                    BaseNode newNodeData = new BaseNode(artifactInfo.artifactId, newNodeUri, false);
                     IndexerNode<BaseNode> newNode = new IndexerNode<BaseNode>(newNodeData);
                     currentNode.addChild(newNode);
                     currentNode = newNode;
@@ -170,7 +171,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode = versionNode;
                 } else {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + artifactInfo.version);
-                    BaseNode newNodeData = new BaseNode(artifactInfo.version, newNodeUri);
+                    BaseNode newNodeData = new BaseNode(artifactInfo.version, newNodeUri, false);
                     IndexerNode<BaseNode> newNode = new IndexerNode<BaseNode>(newNodeData);
                     currentNode.addChild(newNode);
                     currentNode = newNode;
@@ -191,7 +192,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                 IndexerNode<BaseNode> fileNode = currentNode.getNode(filename.toString());
                 if (fileNode == null) {
                     URI newNodeUri = new URI(artifactInfo.remoteUrl);
-                    BaseNode newNodeData = new BaseNode(filename.toString(), newNodeUri);
+                    BaseNode newNodeData = new BaseNode(filename.toString(), newNodeUri, true);
                     IndexerNode<BaseNode> newNode = new IndexerNode<BaseNode>(newNodeData);
                     currentNode.addChild(newNode);
                 }

@@ -73,8 +73,11 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
     private File checkDirectory() throws FileNotFoundException, NoDirectoryException, URISyntaxException {
         File file = new File(url);
         if (!file.exists()) {
-            file = new File(new URI(url));
-            if (!file.exists()) throw new FileNotFoundException("'" + url + "' not found.");
+            try {
+                file = new File(new URI(url));
+            } catch (IllegalArgumentException e) {
+                if (!file.exists()) throw new FileNotFoundException("'" + url + "' not found.");
+            }
         }
         if (!file.isDirectory()) {
             throw new NoDirectoryException("'" + url + "' is not a directory");
@@ -83,7 +86,7 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
     }
 
     private void addFileToGraph(File file, IndexerNode<BaseNode> node, String filter) {
-        BaseNode fileNodeData = new BaseNode(file.getName(), file.toURI());
+        BaseNode fileNodeData = new BaseNode(file.getName(), file.toURI(), !file.isDirectory());
         IndexerNode<BaseNode> fileNode = new IndexerNode<BaseNode>(fileNodeData);
         if (filter != null && !"".equals(filter)) {
             if (file.getName().matches(filter)) node.addChild(fileNode);

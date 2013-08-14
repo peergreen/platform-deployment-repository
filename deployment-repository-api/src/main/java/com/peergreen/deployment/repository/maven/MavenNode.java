@@ -22,8 +22,8 @@ public class MavenNode extends BaseNode {
     private MavenArtifactInfo artifactInfo;
     private String type;
 
-    public MavenNode(String name, URI uri, String type, MavenArtifactInfo artifactInfo) {
-        super(name, uri);
+    public MavenNode(String name, URI uri, boolean isLeaf, String type, MavenArtifactInfo artifactInfo) {
+        super(name, uri, isLeaf);
         this.type = type;
         this.artifactInfo = artifactInfo;
     }

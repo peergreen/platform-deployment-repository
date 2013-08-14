@@ -18,10 +18,12 @@ import java.net.URI;
 public class BaseNode {
     private String name;
     private URI uri;
+    private boolean isLeaf;
 
-    public BaseNode(String name, URI uri) {
+    public BaseNode(String name, URI uri, boolean isLeaf) {
         this.name = name;
         this.uri = uri;
+        this.isLeaf = isLeaf;
     }
 
     public String getName() {
@@ -30,5 +32,9 @@ public class BaseNode {
 
     public URI getUri() {
         return uri;
+    }
+
+    public boolean isLeaf() {
+        return isLeaf;
     }
 }
