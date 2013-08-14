@@ -20,6 +20,7 @@ import com.peergreen.deployment.repository.BaseNode;
 import com.peergreen.deployment.repository.internal.base.InternalAttributes;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
 import com.peergreen.deployment.repository.internal.tree.IndexerNode;
+import com.peergreen.deployment.repository.search.RepositoryQuery;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Property;
@@ -203,31 +204,34 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         return graph;
     }
 
+    @Override
     public IndexerGraph<MavenNode> list(com.peergreen.deployment.repository.search.Query... queries) {
         IndexerGraph<MavenNode> graph = new IndexerGraph<>();
         try {
             // add root element
-            MavenNode root = new MavenNode(name, new URI(url), "repository", null);
+            MavenNode root = new MavenNode(name, new URI(url), false, "repository", new MavenArtifactInfo(url, null, null, null, null));
             IndexerNode<MavenNode> rootNode = new IndexerNode<MavenNode>(root);
             graph.addNode(rootNode);
 
-            for (ArtifactInfo artifactInfo : process(createQuery(queries))) {
+            IteratorSearchResponse response = process(createQuery(queries));
+            for (ArtifactInfo artifactInfo : response.getResults()) {
                 // add GroupId
                 String[] splitGroupId = splitGroupId(artifactInfo.groupId);
                 IndexerNode<MavenNode> currentNode = rootNode;
-                for (String aSplitGroupId : splitGroupId) {
-                    IndexerNode<MavenNode> node = currentNode.getNode(aSplitGroupId);
+                for (int i = 0; i < splitGroupId.length; i++) {
+                    IndexerNode<MavenNode> node = currentNode.getNode(splitGroupId[i]);
                     if (node != null) {
                         currentNode = node;
                     } else {
-                        URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + aSplitGroupId);
-                        MavenNode newNodeData = new MavenNode(aSplitGroupId, newNodeUri, ArtifactInfo.GROUP_ID, null);
+                        URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + splitGroupId[i]);
+                        MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, getSubGroupId(splitGroupId, i), null, null, null);
+                        MavenNode newNodeData = new MavenNode(splitGroupId[i], newNodeUri, false, ArtifactInfo.GROUP_ID, mavenArtifactInfo);
                         IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                         currentNode.addChild(newNode);
                         currentNode = newNode;
                     }
                 }
-                currentNode.getData().setArtifactInfo(new MavenArtifactInfo(artifactInfo.groupId, null, null, null));
+                currentNode.getData().setArtifactInfo(new MavenArtifactInfo(url, artifactInfo.groupId, null, null, null));
 
                 // add ArtifactId
                 IndexerNode<MavenNode> artifactNode = currentNode.getNode(artifactInfo.artifactId);
@@ -235,8 +239,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode = artifactNode;
                 } else {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + artifactInfo.artifactId);
-                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(artifactInfo.groupId, artifactInfo.artifactId, null, null);
-                    MavenNode newNodeData = new MavenNode(artifactInfo.artifactId, newNodeUri, ArtifactInfo.ARTIFACT_ID, mavenArtifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, null, null);
+                    MavenNode newNodeData = new MavenNode(artifactInfo.artifactId, newNodeUri, false, ArtifactInfo.ARTIFACT_ID, mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                     currentNode = newNode;
@@ -248,8 +252,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode = versionNode;
                 } else {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + artifactInfo.version);
-                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, null);
-                    MavenNode newNodeData = new MavenNode(artifactInfo.version, newNodeUri, ArtifactInfo.VERSION, mavenArtifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, null);
+                    MavenNode newNodeData = new MavenNode(artifactInfo.version, newNodeUri, false, ArtifactInfo.VERSION, mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                     currentNode = newNode;
@@ -270,17 +274,27 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                 IndexerNode<MavenNode> fileNode = currentNode.getNode(filename.toString());
                 if (fileNode == null) {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + filename.toString());
-                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, artifactInfo.classifier);
-                    MavenNode newNodeData = new MavenNode(filename.toString(), newNodeUri, "file", mavenArtifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, artifactInfo.classifier);
+                    MavenNode newNodeData = new MavenNode(filename.toString(), newNodeUri, true, "file", mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                 }
             }
+            response.close();
         } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
             // do nothing return empty graph
         }
         return graph;
+    }
+
+    private String getSubGroupId(String[] splitGroupId, int index) {
+        StringBuilder sb = new StringBuilder();
+        for (int i= 0; i <= index; i++) {
+            sb.append(splitGroupId[i]);
+            sb.append('.');
+        }
+        sb.append('*');
+        return sb.toString();
     }
 
     private Query createQuery(String filter) {
@@ -317,9 +331,11 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
 
         // Transform Queries
         for(com.peergreen.deployment.repository.search.Query pQuery : queries) {
-            BaseQueryVisitor visitor = new BaseQueryVisitor();
-            pQuery.walk(visitor);
-            query.add(visitor.getQuery(), BooleanClause.Occur.MUST);
+            if (!(pQuery instanceof RepositoryQuery)) {
+                BaseQueryVisitor visitor = new BaseQueryVisitor();
+                pQuery.walk(visitor);
+                query.add(visitor.getQuery(), BooleanClause.Occur.MUST);
+            }
         }
 
         return query;

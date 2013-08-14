@@ -1,2 +1,14 @@
-Private-Package org.apache.lucene.*, org.apache.maven.index.*, org.apache.maven.wagon.*, org.codehaus.plexus.*, org.sonatype.aether.*, com.peergreen.deployment.repository.graph.*, com.peergreen.deployment.repository.node.*,
+Private-Package org.apache.lucene.*,\
+                org.apache.maven.*,\
+                org.codehaus.plexus.*,\
+                org.sonatype.aether.*,\
+                org.sonatype.guice.*,\
+                com.google.inject.*,\
+                javax.inject.*,\
+                org.sonatype.inject.*,\
+                com.peergreen.deployment.repository.graph.*,\
+                com.peergreen.deployment.repository.node.*,\
+                com.peergreen.deployment.repository.internal.*
+
+Embed-Dependency artifactId=indexer-core;inline=false
 Import-Package *;resolution:=optional

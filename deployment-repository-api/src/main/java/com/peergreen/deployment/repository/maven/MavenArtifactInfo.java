@@ -9,12 +9,14 @@ public class MavenArtifactInfo {
         REPOSITORY, GROUP_ID, ARTIFACT_ID, CLASSIFIER, VERSION
     }
 
+    public String repository;
     public String groupId;
     public String artifactId;
     public String version;
     public String classifier;
 
-    public MavenArtifactInfo(String groupId, String artifactId, String version, String classifier) {
+    public MavenArtifactInfo(String repository, String groupId, String artifactId, String version, String classifier) {
+        this.repository = repository;
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
