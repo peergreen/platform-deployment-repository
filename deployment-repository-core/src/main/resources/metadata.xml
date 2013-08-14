@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ipojo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="org.apache.felix.ipojo"
+       xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/1.8.0/core.xsd">
+
+  <instance component="com.peergreen.deployment.repository.maven">
+    <property name="repository.url" type="java.lang.String" value="https://forge.peergreen.com/repository/content/repositories/releases"/>
+    <property name="repository.name" type="java.lang.String" value="Peergreen Releases" />
+    <property name="repository.type" type="java.lang.String" value="remote" />
+  </instance>
+
+  <instance component="com.peergreen.deployment.repository.maven">
+    <property name="repository.url" type="java.lang.String" value="http://repository.ow2.org/nexus/content/repositories/releases"/>
+    <property name="repository.name" type="java.lang.String" value="OW2 Releases" />
+    <property name="repository.type" type="java.lang.String" value="remote" />
+  </instance>
+</ipojo>
