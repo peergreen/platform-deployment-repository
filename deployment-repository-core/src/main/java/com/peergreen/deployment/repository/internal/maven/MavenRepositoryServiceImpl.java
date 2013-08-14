@@ -38,22 +38,24 @@ import org.apache.maven.index.IteratorSearchResponse;
 import org.apache.maven.index.context.IndexCreator;
 import org.apache.maven.index.context.IndexingContext;
 import org.apache.maven.index.updater.IndexUpdateRequest;
+import org.apache.maven.index.updater.IndexUpdateResult;
 import org.apache.maven.index.updater.IndexUpdater;
 import org.apache.maven.index.updater.ResourceFetcher;
-import org.apache.maven.index.updater.WagonHelper;
-import org.apache.maven.wagon.Wagon;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,22 +83,44 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         plexusContainer = new DefaultPlexusContainer();
         indexer = plexusContainer.lookup(Indexer.class);
         indexUpdater = plexusContainer.lookup(IndexUpdater.class);
-        wagon = plexusContainer.lookup( Wagon.class, "http" );
 
         if (url.charAt(url.length() - 1) == '/') {
             url = url.substring(0, url.length() - 1);
         }
         URL urlObject = new URL(url);
+        File repoLocalCache = new File("target/" + urlObject.getHost() + "/cache");
         File repoIndexDir = new File("target/" + urlObject.getHost() + "/index");
-        File repoLocalCache = new File("target/" + urlObject.getHost() + "/index");
         List<IndexCreator> indexers = new ArrayList<IndexCreator>();
         indexers.add( plexusContainer.lookup( IndexCreator.class, "min" ) );
         indexers.add( plexusContainer.lookup( IndexCreator.class, "jarContent" ) );
         indexers.add( plexusContainer.lookup( IndexCreator.class, "maven-plugin" ) );
         context = indexer.createIndexingContext("context", urlObject.getHost(), repoLocalCache, repoIndexDir, url, null, true, true, indexers);
-        ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher( wagon, null, null, null );
-        IndexUpdateRequest updateRequest = new IndexUpdateRequest( context, resourceFetcher );
-        indexUpdater.fetchAndUpdateIndex(updateRequest);
+        IndexUpdateRequest updateRequest = new IndexUpdateRequest(context, new ResourceFetcher() {
+            @Override
+            public void connect(String id, String url) throws IOException {
+
+            }
+
+            @Override
+            public void disconnect() throws IOException {
+            }
+
+            @Override
+            public InputStream retrieve(String name) throws IOException, FileNotFoundException {
+                return new URL(url + File.separator + ".index" + File.separator + name).openStream();
+            }
+        });
+
+        Date contextCurrentTimestamp = context.getTimestamp();
+        IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
+        if (updateResult.isFullUpdate()) {
+            System.out.println( "Full update happened!" );
+        } else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
+            System.out.println( "No update needed, index is up to date!" );
+        } else {
+            System.out.println( "Incremental update happened, change covered " + contextCurrentTimestamp
+                    + " - " + updateResult.getTimestamp() + " period." );
+        }
     }
 
     @Invalidate
