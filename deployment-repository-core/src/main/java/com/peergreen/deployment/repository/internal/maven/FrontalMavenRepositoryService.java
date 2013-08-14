@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 @Instantiate
-@Provides(properties = @StaticServiceProperty(name = "type", type = "java.lang.String", value = RepositoryType.FACADE, mandatory = true))
+@Provides(properties = @StaticServiceProperty(name = "repository.type", type = "java.lang.String", value = RepositoryType.FACADE, mandatory = true))
 public class FrontalMavenRepositoryService implements MavenRepositoryService {
 
     private Map<String, MavenRepositoryService> mavenRepositoryServices = new ConcurrentHashMap<String, MavenRepositoryService>();
@@ -98,7 +98,7 @@ public class FrontalMavenRepositoryService implements MavenRepositoryService {
         return urls;
     }
 
-    @Bind(optional = true, aggregate = true, filter = "(!(type=" + RepositoryType.FACADE + "))")
+    @Bind(optional = true, aggregate = true, filter = "(!(repository.type=" + RepositoryType.FACADE + "))")
     public void bindMavenRepositoryService(MavenRepositoryService mavenRepositoryService) {
         mavenRepositoryServices.put(mavenRepositoryService.getAttributes().as(Repository.class).getUrl(),
                 mavenRepositoryService);

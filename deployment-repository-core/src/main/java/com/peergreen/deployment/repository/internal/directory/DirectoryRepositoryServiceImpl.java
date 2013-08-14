@@ -34,34 +34,30 @@ import java.util.Map;
 /**
  * @author Mohammed Boukada
  */
-@Component
-@Provides(properties = @StaticServiceProperty(name = "type", type = "java.lang.String", mandatory = true))
+@Component(name = "com.peergreen.deployment.repository.directory")
+@Provides(properties = @StaticServiceProperty(name = "repository.type", type = "java.lang.String", mandatory = true))
 public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryService {
 
-    @Property
+    @Property(name = "repository.name")
     private String name;
-    @Property(mandatory = true)
+    @Property(name = "repository.url", mandatory = true)
     private String url;
-
-    @Validate
-    public void init() throws FileNotFoundException, NoDirectoryException, URISyntaxException {
-        checkDirectory();
-    }
 
     public IndexerGraph<BaseNode> list(String filter) {
         IndexerGraph<BaseNode> graph = new IndexerGraph<>();
         try {
+            File dir = checkDirectory();
+
             // Adds root node
-            BaseNode root = new BaseNode(name, new URI(url));
+            BaseNode root = new BaseNode(name, dir.toURI(), !dir.isDirectory());
             IndexerNode<BaseNode> rootNode = new IndexerNode<BaseNode>(root);
             graph.addNode(rootNode);
 
-            File dir = checkDirectory();
             for (File file : dir.listFiles()) {
                 addFileToGraph(file, rootNode, filter);
             }
         } catch (URISyntaxException | FileNotFoundException | NoDirectoryException e) {
-            e.printStackTrace();
+            // do nothing
         }
         return graph;
     }

@@ -36,7 +36,6 @@ public class TestDirectoryRepositoryService {
         directoryRepositoryService = new DirectoryRepositoryServiceImpl();
         directoryRepositoryService.setName("Test Directory");
         directoryRepositoryService.setUrl(getClass().getResource("/testDir").toString());
-        directoryRepositoryService.init();
     }
 
     @Test
@@ -54,7 +53,7 @@ public class TestDirectoryRepositoryService {
         Assert.assertTrue(graph.getNodes().size() == 1);
         IndexerNode<BaseNode> rootNode = (IndexerNode<BaseNode>) graph.getNodes().iterator().next();
         Assert.assertEquals(rootNode.getData().getName(), "Test Directory");
-        Assert.assertEquals(rootNode.getData().getUri(), getClass().getResource("/testDir").toURI());
+        Assert.assertEquals(rootNode.getData().getUri(), getClass().getResource("/testDir/").toURI());
         Assert.assertEquals(rootNode.getChildren().size(), 4);
         Assert.assertTrue(rootNode.getNode("file1.txt") != null);
         Assert.assertTrue(rootNode.getNode("file2.txt") != null);

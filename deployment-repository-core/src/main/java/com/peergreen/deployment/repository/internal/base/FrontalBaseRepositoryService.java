@@ -39,7 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 @Component
 @Instantiate
-@Provides(properties = @StaticServiceProperty(name = "type", type = "java.lang.String", value = RepositoryType.SUPER, mandatory = true))
+@Provides(properties = @StaticServiceProperty(name = "repository.type", type = "java.lang.String", value = RepositoryType.SUPER, mandatory = true))
 public class FrontalBaseRepositoryService implements RepositoryService {
 
     private List<RepositoryService> facadeRepositoryServices = new CopyOnWriteArrayList<RepositoryService>();
@@ -72,7 +72,7 @@ public class FrontalBaseRepositoryService implements RepositoryService {
         return urls;
     }
 
-    @Bind(optional = true, aggregate = true, filter = "(type=" + RepositoryType.FACADE + ")")
+    @Bind(optional = true, aggregate = true, filter = "(repository.type=" + RepositoryType.FACADE + ")")
     public void bindFacadeRepositoryService(RepositoryService repositoryService) {
         facadeRepositoryServices.add(repositoryService);
     }

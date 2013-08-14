@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 @Instantiate
-@Provides(properties = @StaticServiceProperty(name = "type", type = "java.lang.String", value = RepositoryType.FACADE, mandatory = true))
+@Provides(properties = @StaticServiceProperty(name = "repository.type", type = "java.lang.String", value = RepositoryType.FACADE, mandatory = true))
 public class FrontalDirectoryRepositoryService implements DirectoryRepositoryService {
 
     private Map<String, DirectoryRepositoryService> directoryRepositoryServices = new ConcurrentHashMap<String, DirectoryRepositoryService>();
@@ -67,7 +67,7 @@ public class FrontalDirectoryRepositoryService implements DirectoryRepositorySer
         return urls;
     }
 
-    @Bind(optional = true, aggregate = true, filter = "(!(type=" + RepositoryType.FACADE + "))")
+    @Bind(optional = true, aggregate = true, filter = "(!(repository.type=" + RepositoryType.FACADE + "))")
     public void bindDirectoryRepositoryService(DirectoryRepositoryService directoryRepositoryService) {
         directoryRepositoryServices.put(directoryRepositoryService.getAttributes().as(Repository.class).getUrl(),
                 directoryRepositoryService);

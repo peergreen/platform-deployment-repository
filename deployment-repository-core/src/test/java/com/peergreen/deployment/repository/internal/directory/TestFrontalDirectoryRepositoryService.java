@@ -41,12 +41,10 @@ public class TestFrontalDirectoryRepositoryService {
         directoryRepositoryService1 = new DirectoryRepositoryServiceImpl();
         directoryRepositoryService1.setName("Test Directory");
         directoryRepositoryService1.setUrl(getClass().getResource("/testDir").toString());
-        directoryRepositoryService1.init();
 
         directoryRepositoryService2 = new DirectoryRepositoryServiceImpl();
         directoryRepositoryService2.setName("Test Directory 2");
         directoryRepositoryService2.setUrl(getClass().getResource("/testDir2").toString());
-        directoryRepositoryService2.init();
 
         frontalDirectoryRepositoryService.bindDirectoryRepositoryService(directoryRepositoryService1);
         frontalDirectoryRepositoryService.bindDirectoryRepositoryService(directoryRepositoryService2);

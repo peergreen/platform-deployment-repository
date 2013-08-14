@@ -63,19 +63,18 @@ import java.util.Map;
 /**
  * @author Mohammed Boukada
  */
-@Component
-@Provides(properties = @StaticServiceProperty(name = "type", type = "java.lang.String", mandatory = true))
+@Component(name = "com.peergreen.deployment.repository.maven")
+@Provides(properties = @StaticServiceProperty(name = "repository.type", type = "java.lang.String", mandatory = true))
 public class MavenRepositoryServiceImpl implements MavenRepositoryService {
 
-    @Property
+    @Property(name = "repository.name")
     private String name;
-    @Property(mandatory = true)
+    @Property(name = "repository.url", mandatory = true)
     private String url;
 
     private PlexusContainer plexusContainer;
     private Indexer indexer;
     private IndexUpdater indexUpdater;
-    private Wagon wagon;
     private IndexingContext context;
 
     @Validate
