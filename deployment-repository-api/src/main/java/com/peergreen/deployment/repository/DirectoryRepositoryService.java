@@ -10,8 +10,12 @@
 
 package com.peergreen.deployment.repository;
 
+import java.net.URI;
+import java.util.List;
+
 /**
  * @author Mohammed Boukada
  */
 public interface DirectoryRepositoryService extends RepositoryService {
+    List<Node<BaseNode>> getChildren(URI uri);
 }

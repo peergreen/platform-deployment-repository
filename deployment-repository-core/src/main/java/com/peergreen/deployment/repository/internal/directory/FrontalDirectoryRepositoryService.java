@@ -26,10 +26,12 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
 import org.apache.felix.ipojo.annotations.Unbind;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,5 +78,24 @@ public class FrontalDirectoryRepositoryService implements DirectoryRepositorySer
     @Unbind
     public void unbindDirectoryRepositoryService(DirectoryRepositoryService directoryRepositoryService) {
         directoryRepositoryServices.remove(directoryRepositoryService.getAttributes().as(Repository.class).getUrl());
+    }
+
+    @Override
+    public List<Node<BaseNode>> getChildren(URI uri) {
+        if (uri == null) {
+            List<Node<BaseNode>> nodes = new ArrayList<>();
+            for (Map.Entry<String, DirectoryRepositoryService> directoryRepositoryService : directoryRepositoryServices.entrySet()) {
+                DirectoryRepositoryServiceImpl impl = (DirectoryRepositoryServiceImpl) directoryRepositoryService.getValue();
+                nodes.addAll(impl.getCache().getNodes());
+            }
+            return nodes;
+        } else {
+            for (Map.Entry<String, DirectoryRepositoryService> directoryRepositoryService : directoryRepositoryServices.entrySet()) {
+                if (uri.toString().startsWith(directoryRepositoryService.getKey())) {
+                    return directoryRepositoryService.getValue().getChildren(uri);
+                }
+            }
+        }
+        return null;
     }
 }

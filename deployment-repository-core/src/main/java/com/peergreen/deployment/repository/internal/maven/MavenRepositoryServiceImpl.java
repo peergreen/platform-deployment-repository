@@ -11,20 +11,23 @@
 package com.peergreen.deployment.repository.internal.maven;
 
 import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.internal.search.BaseQueryVisitor;
-import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
-import com.peergreen.deployment.repository.maven.MavenNode;
-import com.peergreen.deployment.repository.MavenRepositoryService;
-import com.peergreen.deployment.repository.internal.base.AttributesName;
 import com.peergreen.deployment.repository.BaseNode;
+import com.peergreen.deployment.repository.MavenRepositoryService;
+import com.peergreen.deployment.repository.Node;
+import com.peergreen.deployment.repository.internal.base.AttributesName;
 import com.peergreen.deployment.repository.internal.base.InternalAttributes;
+import com.peergreen.deployment.repository.internal.search.BaseQueryVisitor;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
 import com.peergreen.deployment.repository.internal.tree.IndexerNode;
+import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
+import com.peergreen.deployment.repository.maven.MavenNode;
+import com.peergreen.deployment.repository.search.Queries;
 import com.peergreen.deployment.repository.search.RepositoryQuery;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Property;
 import org.apache.felix.ipojo.annotations.Provides;
+import org.apache.felix.ipojo.annotations.ServiceController;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.apache.lucene.index.Term;
@@ -48,7 +51,6 @@ import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -60,6 +62,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARCHIVE;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARTIFACT_ID;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.GROUP_ID;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.REPOSITORY;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.VERSION;
 
 /**
  * @author Mohammed Boukada
@@ -192,7 +200,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
 
                 IndexerNode<BaseNode> fileNode = currentNode.getNode(filename.toString());
                 if (fileNode == null) {
-                    URI newNodeUri = new URI(artifactInfo.remoteUrl);
+                    URI newNodeUri = getMavenDeployableURI(artifactInfo);
                     BaseNode newNodeData = new BaseNode(filename.toString(), newNodeUri, true);
                     IndexerNode<BaseNode> newNode = new IndexerNode<BaseNode>(newNodeData);
                     currentNode.addChild(newNode);
@@ -285,6 +293,105 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
             // do nothing return empty graph
         }
         return graph;
+    }
+
+    @Override
+    public List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type parentType) {
+        IndexerNode<MavenNode> node = cache.getNode(uri);
+        if (node != null && node.getChildren().size() > 0) {
+            return node.getChildren();
+        } else if (uri != null) {
+            MavenArtifactInfo mavenArtifactInfo = getMavenArtifactInfo(uri, parentType);
+            if (mavenArtifactInfo != null) {
+                switch (parentType) {
+                    case GROUP_ID:
+                        try {
+                            List<Node<MavenNode>> children = new ArrayList<>();
+                            children.addAll(addGroupsToCache(cache.getNode(name), uri, mavenArtifactInfo.groupId));
+                            if (context.getAllGroups().contains(mavenArtifactInfo.groupId)) {
+                                cache.merge(list(Queries.groupId(mavenArtifactInfo.groupId)));
+                                children.addAll(cache.getNode(uri).getChildren());
+                            }
+                            return children;
+                        } catch (IOException | URISyntaxException e) {
+                            // do nothing
+                        }
+                        break;
+                    case ARTIFACT_ID:
+                        cache.merge(list(Queries.groupId(mavenArtifactInfo.groupId), Queries.artifactId(mavenArtifactInfo.artifactId)));
+                        return cache.getNode(uri).getChildren();
+                    case VERSION:
+                        cache.merge(list(Queries.groupId(mavenArtifactInfo.groupId), Queries.artifactId(mavenArtifactInfo.artifactId), Queries.version(mavenArtifactInfo.version)));
+                        return cache.getNode(uri).getChildren();
+                }
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    private MavenArtifactInfo getMavenArtifactInfo(URI uri, MavenArtifactInfo.Type parentType) {
+        String sUri = uri.toString();
+        if (sUri.charAt(sUri.length() - 1) == '/') {
+            sUri = sUri.substring(0, sUri.length() - 1);
+        }
+        String relativeURI = sUri.substring(url.length() + 1);
+        switch (parentType) {
+            case REPOSITORY:
+                return new MavenArtifactInfo(url, null, null, null, null, parentType);
+            case GROUP_ID:
+                return new MavenArtifactInfo(url, relativeURI.replace('/', '.'), null, null, null, parentType);
+            case ARTIFACT_ID:
+                String gid = relativeURI.substring(0, relativeURI.lastIndexOf('/')).replace('/', '.');
+                String aid = relativeURI.substring(relativeURI.lastIndexOf('/') + 1);
+                return new MavenArtifactInfo(url, gid, aid, null, null, parentType);
+            case VERSION:
+                String version = relativeURI.substring(relativeURI.lastIndexOf('/') + 1);
+                relativeURI = relativeURI.substring(0, relativeURI.lastIndexOf('/'));
+                gid = relativeURI.substring(0, relativeURI.lastIndexOf('/')).replace('/', '.');
+                aid = relativeURI.substring(relativeURI.lastIndexOf('/') + 1);
+                return new MavenArtifactInfo(url, gid, aid, version, null, parentType);
+        }
+        return null;
+    }
+
+    private List<Node<MavenNode>> addGroupsToCache(IndexerNode<MavenNode> root, URI uri, String groupId) throws IOException, URISyntaxException {
+        IndexerNode<MavenNode> returnNode = null;
+        for (String gid : context.getAllGroups()) {
+            if (gid.startsWith(groupId)) {
+                String[] splitGroupId = splitGroupId(gid);
+                IndexerNode<MavenNode> currentNode = root;
+                for (int i = 0; i < splitGroupId.length && i < splitGroupId(groupId).length + 1; i++) {
+                    IndexerNode<MavenNode> node = currentNode.getNode(splitGroupId[i]);
+                    if (node != null) {
+                        currentNode = node;
+                    } else {
+                        URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + splitGroupId[i]);
+                        MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, getSubGroupId(splitGroupId, i), null, null, null, GROUP_ID);
+                        MavenNode newNodeData = new MavenNode(splitGroupId[i], newNodeUri, false, mavenArtifactInfo);
+                        IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
+                        currentNode.addChild(newNode);
+                        currentNode = newNode;
+                    }
+                    if (currentNode.getData().getUri().equals(uri)) {
+                        returnNode = currentNode;
+                    }
+                }
+            }
+        }
+        return returnNode != null ? returnNode.getChildren() : null;
+    }
+
+    private URI getMavenDeployableURI(ArtifactInfo artifactInfo) throws URISyntaxException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("mvn:");
+        sb.append(url);
+        sb.append('!');
+        sb.append(artifactInfo.groupId);
+        sb.append('/');
+        sb.append(artifactInfo.artifactId);
+        sb.append('/');
+        sb.append(artifactInfo.version);
+        return new URI(sb.toString());
     }
 
     private String getSubGroupId(String[] splitGroupId, int index) {

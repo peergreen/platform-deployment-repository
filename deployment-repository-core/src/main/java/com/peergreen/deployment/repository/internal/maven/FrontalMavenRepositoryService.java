@@ -12,6 +12,7 @@ package com.peergreen.deployment.repository.internal.maven;
 
 import com.peergreen.deployment.repository.Attributes;
 import com.peergreen.deployment.repository.BaseNode;
+import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
 import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.MavenRepositoryService;
 import com.peergreen.deployment.repository.Node;
@@ -29,10 +30,12 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
 import org.apache.felix.ipojo.annotations.Unbind;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,6 +71,25 @@ public class FrontalMavenRepositoryService implements MavenRepositoryService {
             }
         }
         return new IndexerGraph<>(nodes);
+    }
+
+    @Override
+    public List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type type) {
+        if (uri == null) {
+            List<Node<MavenNode>> nodes = new ArrayList<>();
+            for (Map.Entry<String, MavenRepositoryService> mavenRepositoryService : mavenRepositoryServices.entrySet()) {
+                MavenRepositoryServiceImpl impl = (MavenRepositoryServiceImpl) mavenRepositoryService.getValue();
+                nodes.addAll(impl.getCache().getNodes());
+            }
+            return nodes;
+        } else {
+            for (Map.Entry<String, MavenRepositoryService> mavenRepositoryService : mavenRepositoryServices.entrySet()) {
+                if (uri.toString().startsWith(mavenRepositoryService.getKey()) && type != null) {
+                    return mavenRepositoryService.getValue().getChildren(uri, type);
+                }
+            }
+        }
+        return null;
     }
 
     @Override

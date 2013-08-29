@@ -10,12 +10,17 @@
 
 package com.peergreen.deployment.repository;
 
+import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
 import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.search.Query;
+
+import java.net.URI;
+import java.util.List;
 
 /**
  * @author Mohammed Boukada
  */
 public interface MavenRepositoryService extends RepositoryService {
     Graph<MavenNode> list(Query... queries);
+    List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type parentType);
 }
