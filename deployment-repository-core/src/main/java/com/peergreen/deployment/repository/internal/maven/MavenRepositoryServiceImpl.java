@@ -80,28 +80,27 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
     private String name;
     @Property(name = "repository.url", mandatory = true)
     private String url;
+    @ServiceController
+    private boolean isReady = false;
 
     private PlexusContainer plexusContainer;
     private Indexer indexer;
-    private IndexUpdater indexUpdater;
     private IndexingContext context;
+    private IndexerGraph<MavenNode> cache = new IndexerGraph<>();
 
     @Validate
     public void init() throws PlexusContainerException, ComponentLookupException, IOException {
         plexusContainer = new DefaultPlexusContainer();
         indexer = plexusContainer.lookup(Indexer.class);
-        indexUpdater = plexusContainer.lookup(IndexUpdater.class);
 
         if (url.charAt(url.length() - 1) == '/') {
             url = url.substring(0, url.length() - 1);
         }
         URL urlObject = new URL(url);
-        File repoLocalCache = new File("target/" + urlObject.getHost() + "/cache");
-        File repoIndexDir = new File("target/" + urlObject.getHost() + "/index");
+        File repoLocalCache = new File("repository/" + urlObject.getHost() + "/cache");
+        File repoIndexDir = new File("repository/" + urlObject.getHost() + "/index");
         List<IndexCreator> indexers = new ArrayList<IndexCreator>();
-        indexers.add( plexusContainer.lookup( IndexCreator.class, "min" ) );
-        indexers.add( plexusContainer.lookup( IndexCreator.class, "jarContent" ) );
-        indexers.add( plexusContainer.lookup( IndexCreator.class, "maven-plugin" ) );
+        indexers.add( plexusContainer.lookup(IndexCreator.class, "min") );
         context = indexer.createIndexingContext("context", urlObject.getHost(), repoLocalCache, repoIndexDir, url, null, true, true, indexers);
         IndexUpdateRequest updateRequest = new IndexUpdateRequest(context, new ResourceFetcher() {
             @Override
@@ -114,21 +113,31 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
             }
 
             @Override
-            public InputStream retrieve(String name) throws IOException, FileNotFoundException {
+            public InputStream retrieve(String name) throws IOException {
                 return new URL(url + File.separator + ".index" + File.separator + name).openStream();
             }
         });
 
-        Date contextCurrentTimestamp = context.getTimestamp();
-        IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
-        if (updateResult.isFullUpdate()) {
-            System.out.println( "Full update happened!" );
-        } else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
-            System.out.println( "No update needed, index is up to date!" );
-        } else {
-            System.out.println( "Incremental update happened, change covered " + contextCurrentTimestamp
-                    + " - " + updateResult.getTimestamp() + " period." );
+        MavenIndexUpdater mavenIndexUpdater = new MavenIndexUpdater(updateRequest);
+        mavenIndexUpdater.start();
+    }
+
+    protected void ready() throws URISyntaxException, IOException {
+        MavenNode root = new MavenNode(name, new URI(url), false, new MavenArtifactInfo(url, null, null, null, null, REPOSITORY));
+        IndexerNode<MavenNode> rootNode = new IndexerNode<MavenNode>(root);
+        cache.addNode(rootNode);
+        for (String rootGroup : context.getRootGroups()) {
+            URI uri = new URI(rootNode.getData().getUri().toString() + "/" + rootGroup);
+            MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, rootGroup, null, null, null, GROUP_ID);
+            MavenNode data = new MavenNode(rootGroup, uri, false, mavenArtifactInfo);
+            IndexerNode<MavenNode> node = new IndexerNode<MavenNode>(data);
+            rootNode.addChild(node);
         }
+        isReady = true;
+    }
+
+    protected boolean isReady() {
+        return isReady;
     }
 
     @Invalidate
@@ -467,5 +476,48 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
 
     protected void closeIndexingContext() throws IOException {
         indexer.closeIndexingContext(context, true);
+    }
+
+    protected IndexerGraph<MavenNode> getCache() {
+        return cache;
+    }
+
+    private class MavenIndexUpdater extends Thread {
+
+        private IndexUpdateRequest updateRequest;
+
+        public MavenIndexUpdater(IndexUpdateRequest updateRequest) {
+            this.updateRequest = updateRequest;
+        }
+
+        @Override
+        public void run() {
+            try {
+                init();
+            } catch (ComponentLookupException | IOException | URISyntaxException e) {
+                // TODO user logger
+            }
+        }
+
+        public void init() throws ComponentLookupException, IOException, URISyntaxException {
+            IndexUpdater indexUpdater = plexusContainer.lookup(IndexUpdater.class);
+            System.out.println( "Updating Index " + url + "..." );
+            System.out.println( "This might take a while on first run, so please be patient!" );
+            Date contextCurrentTimestamp = context.getTimestamp();
+            try {
+                IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
+                if (updateResult.isFullUpdate()) {
+                    System.out.println( "Full update happened!" );
+                } else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
+                    System.out.println( "No update needed, index is up to date!" );
+                } else {
+                    System.out.println( "Incremental update happened, change covered " + contextCurrentTimestamp
+                            + " - " + updateResult.getTimestamp() + " period." );
+                }
+            } catch (IOException e) {
+                // TODO use logger
+            }
+            ready();
+        }
     }
 }

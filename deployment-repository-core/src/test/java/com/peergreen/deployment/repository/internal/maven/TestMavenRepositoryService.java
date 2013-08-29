@@ -11,13 +11,12 @@
 package com.peergreen.deployment.repository.internal.maven;
 
 import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
 import com.peergreen.deployment.repository.internal.tree.IndexerNode;
+import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.search.Queries;
 import com.peergreen.deployment.repository.search.Query;
 import com.peergreen.deployment.repository.view.Repository;
-import org.apache.maven.index.ArtifactInfo;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.testng.Assert;
@@ -29,22 +28,36 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static com.peergreen.deployment.repository.search.Queries.*;
+import static com.peergreen.deployment.repository.internal.maven.Constants.*;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARCHIVE;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARTIFACT_ID;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.GROUP_ID;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.REPOSITORY;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.VERSION;
+import static com.peergreen.deployment.repository.search.Queries.and;
+import static com.peergreen.deployment.repository.search.Queries.artifactId;
+import static com.peergreen.deployment.repository.search.Queries.eq;
+import static com.peergreen.deployment.repository.search.Queries.groupId;
+import static com.peergreen.deployment.repository.search.Queries.or;
 
 /**
  * @author Mohammed Boukada
  */
 public class TestMavenRepositoryService {
 
-    private final static String PEERGREEN_PUBLIC_REPOSITORY = "https://forge.peergreen.com/repository/content/repositories/releases";
     private MavenRepositoryServiceImpl mavenRepositoryService;
 
     @BeforeClass
-    public void configure() throws ComponentLookupException, PlexusContainerException, IOException {
+    public void configure() throws PlexusContainerException, ComponentLookupException, IOException, InterruptedException {
         mavenRepositoryService = new MavenRepositoryServiceImpl();
         mavenRepositoryService.setUrl(PEERGREEN_PUBLIC_REPOSITORY);
         mavenRepositoryService.setName("Peergreen Public Repository");
         mavenRepositoryService.init();
+        Long start = System.currentTimeMillis();
+        while (!mavenRepositoryService.isReady() && (System.currentTimeMillis() - start) < TIMEOUT) {
+            Thread.sleep(100);
+        }
+        Assert.assertTrue(mavenRepositoryService.isReady(), PEERGREEN_PUBLIC_REPOSITORY + " initialization failed");
     }
 
     @AfterClass

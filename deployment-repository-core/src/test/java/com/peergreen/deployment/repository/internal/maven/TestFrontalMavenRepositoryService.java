@@ -11,8 +11,8 @@
 package com.peergreen.deployment.repository.internal.maven;
 
 import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
+import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.view.Facade;
 import com.peergreen.deployment.repository.view.Repository;
 import org.codehaus.plexus.PlexusContainerException;
@@ -24,30 +24,43 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
+import static com.peergreen.deployment.repository.internal.maven.Constants.OW2_PUBLIC_REPOSITORY;
+import static com.peergreen.deployment.repository.internal.maven.Constants.PEERGREEN_PUBLIC_REPOSITORY;
+import static com.peergreen.deployment.repository.internal.maven.Constants.TIMEOUT;
+
 /**
  * @author Mohammed Boukada
  */
 public class TestFrontalMavenRepositoryService {
-    private final static String PEERGREEN_PUBLIC_REPOSITORY = "https://forge.peergreen.com/repository/content/repositories/releases";
-    private final static String OW2_PUBLIC_REPOSITORY = "http://repository.ow2.org/nexus/content/repositories/releases";
+
 
     private FrontalMavenRepositoryService frontalMavenRepositoryService;
     private MavenRepositoryServiceImpl mavenRepositoryService1;
     private MavenRepositoryServiceImpl mavenRepositoryService2;
 
     @BeforeClass
-    public void configure() throws ComponentLookupException, PlexusContainerException, IOException {
+    public void configure() throws PlexusContainerException, ComponentLookupException, IOException, InterruptedException {
         frontalMavenRepositoryService = new FrontalMavenRepositoryService();
 
         mavenRepositoryService1 = new MavenRepositoryServiceImpl();
         mavenRepositoryService1.setUrl(PEERGREEN_PUBLIC_REPOSITORY);
         mavenRepositoryService1.setName("Peergreen Public Repository");
         mavenRepositoryService1.init();
+        Long start = System.currentTimeMillis();
+        while (!mavenRepositoryService1.isReady() && (System.currentTimeMillis() - start) < TIMEOUT ) {
+            Thread.sleep(100);
+        }
+        Assert.assertTrue(mavenRepositoryService1.isReady(), PEERGREEN_PUBLIC_REPOSITORY + " initialization failed");
 
         mavenRepositoryService2 = new MavenRepositoryServiceImpl();
         mavenRepositoryService2.setUrl(OW2_PUBLIC_REPOSITORY);
         mavenRepositoryService2.setName("OW2 Public Repository");
         mavenRepositoryService2.init();
+        start = System.currentTimeMillis();
+        while (!mavenRepositoryService2.isReady() && (System.currentTimeMillis() - start) < TIMEOUT ) {
+            Thread.sleep(100);
+        }
+        Assert.assertTrue(mavenRepositoryService2.isReady(), OW2_PUBLIC_REPOSITORY + " initialization failed");
 
         frontalMavenRepositoryService.bindMavenRepositoryService(mavenRepositoryService1);
         frontalMavenRepositoryService.bindMavenRepositoryService(mavenRepositoryService2);
