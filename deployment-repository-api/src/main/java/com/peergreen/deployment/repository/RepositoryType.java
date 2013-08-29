@@ -14,8 +14,8 @@ package com.peergreen.deployment.repository;
  * @author Mohammed Boukada
  */
 public interface RepositoryType {
-    String REMOTE = "remote";
-    String LOCAL = "local";
+    String DIRECTORY = "directory";
+    String MAVEN = "maven";
     String FACADE = "facade";
     String SUPER = "super";
 }

@@ -217,7 +217,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         IndexerGraph<MavenNode> graph = new IndexerGraph<>();
         try {
             // add root element
-            MavenNode root = new MavenNode(name, new URI(url), false, "repository", new MavenArtifactInfo(url, null, null, null, null));
+            MavenNode root = new MavenNode(name, new URI(url), false, new MavenArtifactInfo(url, null, null, null, null, REPOSITORY));
             IndexerNode<MavenNode> rootNode = new IndexerNode<MavenNode>(root);
             graph.addNode(rootNode);
 
@@ -232,14 +232,14 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                         currentNode = node;
                     } else {
                         URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + splitGroupId[i]);
-                        MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, getSubGroupId(splitGroupId, i), null, null, null);
-                        MavenNode newNodeData = new MavenNode(splitGroupId[i], newNodeUri, false, ArtifactInfo.GROUP_ID, mavenArtifactInfo);
+                        MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, getSubGroupId(splitGroupId, i), null, null, null, GROUP_ID);
+                        MavenNode newNodeData = new MavenNode(splitGroupId[i], newNodeUri, false, mavenArtifactInfo);
                         IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                         currentNode.addChild(newNode);
                         currentNode = newNode;
                     }
                 }
-                currentNode.getData().setArtifactInfo(new MavenArtifactInfo(url, artifactInfo.groupId, null, null, null));
+                currentNode.getData().setArtifactInfo(new MavenArtifactInfo(url, artifactInfo.groupId, null, null, null, GROUP_ID));
 
                 // add ArtifactId
                 IndexerNode<MavenNode> artifactNode = currentNode.getNode(artifactInfo.artifactId);
@@ -247,8 +247,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode = artifactNode;
                 } else {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + artifactInfo.artifactId);
-                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, null, null);
-                    MavenNode newNodeData = new MavenNode(artifactInfo.artifactId, newNodeUri, false, ArtifactInfo.ARTIFACT_ID, mavenArtifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, null, null, ARTIFACT_ID);
+                    MavenNode newNodeData = new MavenNode(artifactInfo.artifactId, newNodeUri, false, mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                     currentNode = newNode;
@@ -260,8 +260,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode = versionNode;
                 } else {
                     URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + artifactInfo.version);
-                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, null);
-                    MavenNode newNodeData = new MavenNode(artifactInfo.version, newNodeUri, false, ArtifactInfo.VERSION, mavenArtifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, null, VERSION);
+                    MavenNode newNodeData = new MavenNode(artifactInfo.version, newNodeUri, false, mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                     currentNode = newNode;
@@ -281,9 +281,9 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
 
                 IndexerNode<MavenNode> fileNode = currentNode.getNode(filename.toString());
                 if (fileNode == null) {
-                    URI newNodeUri = new URI(currentNode.getData().getUri().toString() + "/" + filename.toString());
-                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, artifactInfo.classifier);
-                    MavenNode newNodeData = new MavenNode(filename.toString(), newNodeUri, true, "file", mavenArtifactInfo);
+                    URI newNodeUri = getMavenDeployableURI(artifactInfo);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, artifactInfo.groupId, artifactInfo.artifactId, artifactInfo.version, artifactInfo.classifier, ARCHIVE);
+                    MavenNode newNodeData = new MavenNode(filename.toString(), newNodeUri, true, mavenArtifactInfo);
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                 }

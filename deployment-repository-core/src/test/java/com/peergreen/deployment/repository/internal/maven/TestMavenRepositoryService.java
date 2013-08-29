@@ -75,58 +75,61 @@ public class TestMavenRepositoryService {
         URI rootURI = rootNode.getData().getUri();
         Assert.assertNotNull(rootNode);
         Assert.assertEquals(rootNode.getData().getUri(), new URI(PEERGREEN_PUBLIC_REPOSITORY));
-        Assert.assertEquals(rootNode.getData().getType(), "repository");
+        Assert.assertEquals(rootNode.getData().getArtifactInfo().type, REPOSITORY);
         Assert.assertEquals(rootNode.getData().getName(), "Peergreen Public Repository");
 
         IndexerNode<MavenNode> comNode = rootNode.getNode("com");
         Assert.assertNotNull(comNode);
-        Assert.assertEquals(comNode.getData().getType(), ArtifactInfo.GROUP_ID);
+        Assert.assertEquals(comNode.getData().getArtifactInfo().type, GROUP_ID);
         URI expectedComNodeURI = new URI(rootURI.toString() + "/com");
         Assert.assertEquals(comNode.getData().getUri(), expectedComNodeURI);
 
         IndexerNode<MavenNode> peergreenNode = comNode.getNode("peergreen");
         Assert.assertNotNull(peergreenNode);
         Assert.assertTrue(peergreenNode.getChildren().size() >= 2);
-        Assert.assertEquals(peergreenNode.getData().getType(), ArtifactInfo.GROUP_ID);
+        Assert.assertEquals(peergreenNode.getData().getArtifactInfo().type, GROUP_ID);
         URI expectedPeergreenNodeURI = new URI(expectedComNodeURI.toString() + "/peergreen");
         Assert.assertEquals(peergreenNode.getData().getUri(), expectedPeergreenNodeURI);
 
         IndexerNode<MavenNode> communityNode = peergreenNode.getNode("community");
         Assert.assertNotNull(communityNode);
         Assert.assertTrue(communityNode.getChildren().size() >= 7);
-        Assert.assertEquals(communityNode.getData().getType(), ArtifactInfo.GROUP_ID);
+        Assert.assertEquals(communityNode.getData().getArtifactInfo().type, GROUP_ID);
         URI expectedCommunityNodeURI = new URI(expectedPeergreenNodeURI.toString() + "/community");
         Assert.assertEquals(communityNode.getData().getUri(), expectedCommunityNodeURI);
 
         IndexerNode<MavenNode> exampleNode = peergreenNode.getNode("example");
         Assert.assertNotNull(exampleNode);
-        Assert.assertEquals(exampleNode.getData().getType(), ArtifactInfo.GROUP_ID);
+        Assert.assertEquals(exampleNode.getData().getArtifactInfo().type, GROUP_ID);
         URI expectedExampleNodeURI = new URI(expectedPeergreenNodeURI.toString() + "/example");
         Assert.assertEquals(exampleNode.getData().getUri(), expectedExampleNodeURI);
 
         IndexerNode<MavenNode> paxexamNode = exampleNode.getNode("paxexam");
         Assert.assertNotNull(paxexamNode);
         Assert.assertTrue(paxexamNode.getChildren().size() >= 1);
-        Assert.assertEquals(paxexamNode.getData().getType(), ArtifactInfo.GROUP_ID);
+        Assert.assertEquals(paxexamNode.getData().getArtifactInfo().type, GROUP_ID);
         URI expectedPaxexamNodeURI = new URI(expectedExampleNodeURI.toString() + "/paxexam");
         Assert.assertEquals(paxexamNode.getData().getUri(), expectedPaxexamNodeURI);
 
         IndexerNode<MavenNode> helloServiceNode = paxexamNode.getNode("paxexam-hello-service");
         Assert.assertNotNull(helloServiceNode);
-        Assert.assertEquals(helloServiceNode.getData().getType(), ArtifactInfo.ARTIFACT_ID);
+        Assert.assertEquals(helloServiceNode.getData().getArtifactInfo().type, ARTIFACT_ID);
         URI expectedHelloServiceNodeURI = new URI(expectedPaxexamNodeURI.toString() + "/paxexam-hello-service");
         Assert.assertEquals(helloServiceNode.getData().getUri(), expectedHelloServiceNodeURI);
 
         IndexerNode<MavenNode> helloServiceVersion100Node = helloServiceNode.getNode("1.0.0");
         Assert.assertNotNull(helloServiceVersion100Node);
-        Assert.assertEquals(helloServiceVersion100Node.getData().getType(), ArtifactInfo.VERSION);
+        Assert.assertEquals(helloServiceVersion100Node.getData().getArtifactInfo().type, VERSION);
         URI expectedHelloServiceVersion100NodeURI = new URI(expectedHelloServiceNodeURI.toString() + "/1.0.0");
         Assert.assertEquals(helloServiceVersion100Node.getData().getUri(), expectedHelloServiceVersion100NodeURI);
 
         IndexerNode<MavenNode> helloServiceJarFileNode = helloServiceVersion100Node.getNode("paxexam-hello-service-1.0.0.jar");
         Assert.assertNotNull(helloServiceJarFileNode);
-        Assert.assertEquals(helloServiceJarFileNode.getData().getType(), "file");
-        URI expectedHelloServiceJarFileNodeURI = new URI(expectedHelloServiceVersion100NodeURI.toString() + "/paxexam-hello-service-1.0.0.jar");
+        Assert.assertEquals(helloServiceJarFileNode.getData().getArtifactInfo().type, ARCHIVE);
+        URI expectedHelloServiceJarFileNodeURI = new URI("mvn:" + PEERGREEN_PUBLIC_REPOSITORY + "!" +
+                                                         helloServiceJarFileNode.getData().getArtifactInfo().groupId + "/" +
+                                                         helloServiceJarFileNode.getData().getArtifactInfo().artifactId + "/" +
+                                                         helloServiceJarFileNode.getData().getArtifactInfo().version);
         Assert.assertEquals(helloServiceJarFileNode.getData().getUri(), expectedHelloServiceJarFileNodeURI);
     }
 

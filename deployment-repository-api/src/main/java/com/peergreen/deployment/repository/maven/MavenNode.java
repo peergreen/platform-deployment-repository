@@ -20,16 +20,10 @@ import java.net.URI;
 public class MavenNode extends BaseNode {
 
     private MavenArtifactInfo artifactInfo;
-    private String type;
 
-    public MavenNode(String name, URI uri, boolean isLeaf, String type, MavenArtifactInfo artifactInfo) {
+    public MavenNode(String name, URI uri, boolean isLeaf, MavenArtifactInfo artifactInfo) {
         super(name, uri, isLeaf);
-        this.type = type;
         this.artifactInfo = artifactInfo;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public void setArtifactInfo(MavenArtifactInfo artifactInfo) {
