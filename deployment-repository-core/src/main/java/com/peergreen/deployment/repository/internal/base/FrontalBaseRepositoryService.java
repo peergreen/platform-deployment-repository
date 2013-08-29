@@ -14,24 +14,34 @@ import com.peergreen.deployment.repository.Attributes;
 import com.peergreen.deployment.repository.BaseNode;
 import com.peergreen.deployment.repository.Graph;
 import com.peergreen.deployment.repository.Node;
+import com.peergreen.deployment.repository.RepositoryManager;
 import com.peergreen.deployment.repository.RepositoryService;
 import com.peergreen.deployment.repository.RepositoryType;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
 import com.peergreen.deployment.repository.view.Facade;
+import org.apache.felix.ipojo.ComponentInstance;
+import org.apache.felix.ipojo.ConfigurationException;
+import org.apache.felix.ipojo.Factory;
+import org.apache.felix.ipojo.MissingHandlerException;
+import org.apache.felix.ipojo.UnacceptableConfiguration;
 import org.apache.felix.ipojo.annotations.Bind;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Provides;
+import org.apache.felix.ipojo.annotations.Requires;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
 import org.apache.felix.ipojo.annotations.Unbind;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -40,7 +50,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Component
 @Instantiate
 @Provides(properties = @StaticServiceProperty(name = "repository.type", type = "java.lang.String", value = RepositoryType.SUPER, mandatory = true))
-public class FrontalBaseRepositoryService implements RepositoryService {
+public class FrontalBaseRepositoryService implements RepositoryService, RepositoryManager {
+
+    @Requires(from = "com.peergreen.deployment.repository.directory")
+    Factory directoryRepositoryFactory;
+    @Requires(from = "com.peergreen.deployment.repository.maven")
+    Factory mavenRepositoryFactory;
+    private Map<String, ComponentInstance> repositoryInstances = new ConcurrentHashMap<>();
 
     private List<RepositoryService> facadeRepositoryServices = new CopyOnWriteArrayList<RepositoryService>();
 
@@ -80,5 +96,44 @@ public class FrontalBaseRepositoryService implements RepositoryService {
     @Unbind
     public void unbindFacadeRepositoryService(RepositoryService repositoryService) {
         facadeRepositoryServices.remove(repositoryService);
+    }
+
+    @Override
+    public void addRepository(String url, String name, String type) {
+        if (url.charAt(url.length() - 1) == '/') {
+            url = url.substring(0, url.length() - 1);
+        }
+        if (!repositoryInstances.containsKey(url)) {
+            Factory factory = null;
+            switch (type) {
+                case RepositoryType.DIRECTORY:
+                    factory = directoryRepositoryFactory;
+                    break;
+                case RepositoryType.MAVEN:
+                    factory = mavenRepositoryFactory;
+            }
+
+            if (factory != null) {
+                Dictionary<String, Object> properties = new Hashtable<>();
+                properties.put("repository.type", type);
+                properties.put("repository.name", name);
+                properties.put("repository.url", url);
+                try {
+                    repositoryInstances.put(url, factory.createComponentInstance(properties));
+                } catch (UnacceptableConfiguration | MissingHandlerException | ConfigurationException unacceptableConfiguration) {
+                    // TODO use logger
+                    // Fail to add repository
+                }
+            }
+        }
+    }
+
+    @Override
+    public void removeRepository(String url) {
+        if (repositoryInstances.containsKey(url)) {
+            repositoryInstances.get(url).stop();
+            repositoryInstances.get(url).dispose();
+            repositoryInstances.remove(url);
+        }
     }
 }
