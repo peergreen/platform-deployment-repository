@@ -10,8 +10,8 @@ public class RangeQuery implements Query {
     private MavenArtifactInfo.Type field;
     private String minValue;
     private String maxValue;
-    private boolean includeMin;
-    private boolean includeMax;
+    private boolean includeMin = true;
+    private boolean includeMax = true;
 
     public RangeQuery(MavenArtifactInfo.Type field, String minValue, String maxValue, boolean includeMin, boolean includeMax) {
         this.field = field;
