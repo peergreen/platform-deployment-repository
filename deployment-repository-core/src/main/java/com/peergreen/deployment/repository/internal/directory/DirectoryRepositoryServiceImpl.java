@@ -62,6 +62,7 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
 
             // Adds root node
             BaseNode root = new BaseNode(name, dir.toURI(), !dir.isDirectory());
+            root.setLastModified(dir.lastModified());
             IndexerNode<BaseNode> rootNode = new IndexerNode<BaseNode>(root);
             graph.addNode(rootNode);
 
@@ -99,6 +100,7 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
 
     private void addFileToGraph(File file, IndexerNode<BaseNode> node, String filter, boolean recursive) {
         BaseNode fileNodeData = new BaseNode(file.getName(), file.toURI(), !file.isDirectory());
+        fileNodeData.setLastModified(file.lastModified());
         IndexerNode<BaseNode> fileNode = node.getNode(file.getName());
         if (fileNode == null) {
             fileNode = new IndexerNode<BaseNode>(fileNodeData);
@@ -136,18 +138,23 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
 
     @Override
     public List<Node<BaseNode>> getChildren(URI uri) {
-        IndexerNode<BaseNode> node = cache.getNode(uri);
-        if (node != null && node.getChildren().size() > 0) {
-            return node.getChildren();
-        } else if (uri != null) {
-            addFileToGraph(uri, cache.getNode(name));
-            return cache.getNode(uri).getChildren();
+        if (uri != null) {
+            IndexerNode<BaseNode> node = cache.getNode(uri);
+            File file = new File(uri);
+            if (node != null && node.getChildren().size() > 0 &&
+                    file.exists() && file.lastModified() == node.getData().getLastModified()) {
+                return node.getChildren();
+            } else {
+                addFileToGraph(uri, cache.getNode(name));
+                return cache.getNode(uri).getChildren();
+            }
         }
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     private void addFileToGraph(URI uri, Node<BaseNode> rootNode) {
-        if (new File(uri).exists()) {
+        File file = new File(uri);
+        if (file.exists()) {
             IndexerNode<BaseNode> currentNode = (IndexerNode<BaseNode>) rootNode;
             URI rootUri = rootNode.getData().getUri();
             if (!uri.equals(rootUri) && uri.toString().length() > rootUri.toString().length()) {
@@ -156,8 +163,9 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
                     if (!"".equals(splitRelativeUri)) {
                         IndexerNode<BaseNode> node = currentNode.getNode(splitRelativeUri);
                         if (node == null) {
-                            File file = new File(currentNode.getData().getUri().toString() + "/" + splitRelativeUri);
-                            BaseNode data = new BaseNode(splitRelativeUri, file.toURI(), !file.isDirectory());
+                            File f = new File(currentNode.getData().getUri().toString() + "/" + splitRelativeUri);
+                            BaseNode data = new BaseNode(splitRelativeUri, f.toURI(), !f.isDirectory());
+                            data.setLastModified(f.lastModified());
                             node = new IndexerNode<BaseNode>(data);
                             currentNode.addChild(node);
                         }
@@ -168,10 +176,10 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
 
             // add children
             if (!currentNode.getData().isLeaf()) {
-                File file = new File(currentNode.getData().getUri());
                 for (File child : file.listFiles()) {
                     addFileToGraph(child, currentNode, "", false);
                 }
+                currentNode.getData().setLastModified(file.lastModified());
             }
         }
     }

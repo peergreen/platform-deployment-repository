@@ -151,6 +151,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         try {
             // add root element
             BaseNode root = new BaseNode(name, new URI(url), false);
+            root.setLastModified(context.getTimestamp().getTime());
             IndexerNode<BaseNode> rootNode = new IndexerNode<BaseNode>(root);
             graph.addNode(rootNode);
 
@@ -169,6 +170,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                         currentNode.addChild(newNode);
                         currentNode = newNode;
                     }
+                    currentNode.getData().setLastModified(artifactInfo.lastModified);
                 }
 
                 // add ArtifactId
@@ -182,6 +184,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode.addChild(newNode);
                     currentNode = newNode;
                 }
+                currentNode.getData().setLastModified(artifactInfo.lastModified);
 
                 // add Version
                 IndexerNode<BaseNode> versionNode = currentNode.getNode(artifactInfo.version);
@@ -194,6 +197,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode.addChild(newNode);
                     currentNode = newNode;
                 }
+                currentNode.getData().setLastModified(artifactInfo.lastModified);
 
                 // Add file
                 StringBuilder filename = new StringBuilder();
@@ -214,6 +218,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     IndexerNode<BaseNode> newNode = new IndexerNode<BaseNode>(newNodeData);
                     currentNode.addChild(newNode);
                 }
+                currentNode.getData().setLastModified(artifactInfo.lastModified);
             }
         } catch (IOException | URISyntaxException e) {
             // do nothing return empty graph
@@ -227,6 +232,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         try {
             // add root element
             MavenNode root = new MavenNode(name, new URI(url), false, new MavenArtifactInfo(url, null, null, null, null, REPOSITORY));
+            root.setLastModified(context.getTimestamp().getTime());
             IndexerNode<MavenNode> rootNode = new IndexerNode<MavenNode>(root);
             graph.addNode(rootNode);
 
@@ -247,6 +253,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                         currentNode.addChild(newNode);
                         currentNode = newNode;
                     }
+                    currentNode.getData().setLastModified(artifactInfo.lastModified);
                 }
                 currentNode.getData().setArtifactInfo(new MavenArtifactInfo(url, artifactInfo.groupId, null, null, null, GROUP_ID));
 
@@ -262,6 +269,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode.addChild(newNode);
                     currentNode = newNode;
                 }
+                currentNode.getData().setLastModified(artifactInfo.lastModified);
 
                 // add Version
                 IndexerNode<MavenNode> versionNode = currentNode.getNode(artifactInfo.version);
@@ -275,6 +283,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     currentNode.addChild(newNode);
                     currentNode = newNode;
                 }
+                currentNode.getData().setLastModified(artifactInfo.lastModified);
 
                 // Add file
                 StringBuilder filename = new StringBuilder();
@@ -296,6 +305,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     IndexerNode<MavenNode> newNode = new IndexerNode<MavenNode>(newNodeData);
                     currentNode.addChild(newNode);
                 }
+                currentNode.getData().setLastModified(artifactInfo.lastModified);
             }
             response.close();
         } catch (IOException | URISyntaxException e) {

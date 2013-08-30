@@ -18,6 +18,7 @@ import java.net.URI;
 public class BaseNode {
     private String name;
     private URI uri;
+    private Long lastModified;
     private boolean isLeaf;
 
     public BaseNode(String name, URI uri, boolean isLeaf) {
@@ -32,6 +33,14 @@ public class BaseNode {
 
     public URI getUri() {
         return uri;
+    }
+
+    public Long getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(Long lastModified) {
+        this.lastModified = lastModified;
     }
 
     public boolean isLeaf() {
