@@ -23,4 +23,5 @@ import java.util.List;
 public interface MavenRepositoryService extends RepositoryService {
     Graph<MavenNode> list(Query... queries);
     List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type parentType);
+    List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type parentType, boolean refresh);
 }

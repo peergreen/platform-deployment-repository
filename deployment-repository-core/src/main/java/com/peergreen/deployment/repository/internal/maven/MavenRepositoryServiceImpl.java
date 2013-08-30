@@ -122,17 +122,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         mavenIndexUpdater.start();
     }
 
-    protected void ready() throws URISyntaxException, IOException {
-        MavenNode root = new MavenNode(name, new URI(url), false, new MavenArtifactInfo(url, null, null, null, null, REPOSITORY));
-        IndexerNode<MavenNode> rootNode = new IndexerNode<MavenNode>(root);
-        cache.addNode(rootNode);
-        for (String rootGroup : context.getRootGroups()) {
-            URI uri = new URI(rootNode.getData().getUri().toString() + "/" + rootGroup);
-            MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, rootGroup, null, null, null, GROUP_ID);
-            MavenNode data = new MavenNode(rootGroup, uri, false, mavenArtifactInfo);
-            IndexerNode<MavenNode> node = new IndexerNode<MavenNode>(data);
-            rootNode.addChild(node);
-        }
+    protected void ready() {
+        updateRootGroups();
         isReady = true;
     }
 
@@ -316,8 +307,13 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
 
     @Override
     public List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type parentType) {
+        return getChildren(uri, parentType, false);
+    }
+
+    @Override
+    public List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type parentType, boolean refresh) {
         IndexerNode<MavenNode> node = cache.getNode(uri);
-        if (node != null && node.getChildren().size() > 0) {
+        if (!refresh && node != null && node.getChildren().size() > 0) {
             return node.getChildren();
         } else if (uri != null) {
             MavenArtifactInfo mavenArtifactInfo = getMavenArtifactInfo(uri, parentType);
@@ -488,8 +484,34 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         indexer.closeIndexingContext(context, true);
     }
 
-    protected IndexerGraph<MavenNode> getCache() {
+    protected IndexerGraph<MavenNode> getCache(boolean refresh) {
+        if (refresh) {
+            updateRootGroups();
+        }
         return cache;
+    }
+
+    private void updateRootGroups() {
+        try {
+            IndexerNode<MavenNode> rootNode = cache.getNode(name);
+            if (rootNode == null) {
+                MavenNode root = new MavenNode(name, new URI(url), false, new MavenArtifactInfo(url, null, null, null, null, REPOSITORY));
+                rootNode = new IndexerNode<MavenNode>(root);
+                cache.addNode(rootNode);
+            }
+
+            for (String rootGroup : context.getRootGroups()) {
+                if (rootNode.getNode(rootGroup) == null) {
+                    URI uri = new URI(rootNode.getData().getUri().toString() + "/" + rootGroup);
+                    MavenArtifactInfo mavenArtifactInfo = new MavenArtifactInfo(url, rootGroup, null, null, null, GROUP_ID);
+                    MavenNode data = new MavenNode(rootGroup, uri, false, mavenArtifactInfo);
+                    IndexerNode<MavenNode> node = new IndexerNode<MavenNode>(data);
+                    rootNode.addChild(node);
+                }
+            }
+        } catch (IOException | URISyntaxException e) {
+            // TODO use logger
+        }
     }
 
     private class MavenIndexUpdater extends Thread {
@@ -504,28 +526,24 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         public void run() {
             try {
                 init();
-            } catch (ComponentLookupException | IOException | URISyntaxException e) {
+            } catch (ComponentLookupException | IOException e) {
                 // TODO user logger
             }
         }
 
-        public void init() throws ComponentLookupException, IOException, URISyntaxException {
+        public void init() throws ComponentLookupException, IOException {
             IndexUpdater indexUpdater = plexusContainer.lookup(IndexUpdater.class);
             System.out.println( "Updating Index " + url + "..." );
             System.out.println( "This might take a while on first run, so please be patient!" );
             Date contextCurrentTimestamp = context.getTimestamp();
-            try {
-                IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
-                if (updateResult.isFullUpdate()) {
-                    System.out.println( "Full update happened!" );
-                } else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
-                    System.out.println( "No update needed, index is up to date!" );
-                } else {
-                    System.out.println( "Incremental update happened, change covered " + contextCurrentTimestamp
-                            + " - " + updateResult.getTimestamp() + " period." );
-                }
-            } catch (IOException e) {
-                // TODO use logger
+            IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
+            if (updateResult.isFullUpdate()) {
+                System.out.println( "Full update happened!" );
+            } else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
+                System.out.println( "No update needed, index is up to date!" );
+            } else {
+                System.out.println( "Incremental update happened, change covered " + contextCurrentTimestamp
+                        + " - " + updateResult.getTimestamp() + " period." );
             }
             ready();
         }

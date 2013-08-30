@@ -75,17 +75,22 @@ public class FrontalMavenRepositoryService implements MavenRepositoryService {
 
     @Override
     public List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type type) {
+        return getChildren(uri, type, false);
+    }
+
+    @Override
+    public List<Node<MavenNode>> getChildren(URI uri, MavenArtifactInfo.Type type, boolean refresh) {
         if (uri == null) {
             List<Node<MavenNode>> nodes = new ArrayList<>();
             for (Map.Entry<String, MavenRepositoryService> mavenRepositoryService : mavenRepositoryServices.entrySet()) {
                 MavenRepositoryServiceImpl impl = (MavenRepositoryServiceImpl) mavenRepositoryService.getValue();
-                nodes.addAll(impl.getCache().getNodes());
+                nodes.addAll(impl.getCache(refresh).getNodes());
             }
             return nodes;
         } else {
             for (Map.Entry<String, MavenRepositoryService> mavenRepositoryService : mavenRepositoryServices.entrySet()) {
                 if (uri.toString().startsWith(mavenRepositoryService.getKey()) && type != null) {
-                    return mavenRepositoryService.getValue().getChildren(uri, type);
+                    return mavenRepositoryService.getValue().getChildren(uri, type, refresh);
                 }
             }
         }
