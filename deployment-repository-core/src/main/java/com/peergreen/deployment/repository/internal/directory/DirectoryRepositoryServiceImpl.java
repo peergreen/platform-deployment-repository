@@ -14,6 +14,7 @@ import com.peergreen.deployment.repository.Attributes;
 import com.peergreen.deployment.repository.BaseNode;
 import com.peergreen.deployment.repository.DirectoryRepositoryService;
 import com.peergreen.deployment.repository.Node;
+import com.peergreen.deployment.repository.RepositoryType;
 import com.peergreen.deployment.repository.internal.base.AttributesName;
 import com.peergreen.deployment.repository.internal.base.InternalAttributes;
 import com.peergreen.deployment.repository.internal.exception.NoDirectoryException;
@@ -80,6 +81,7 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
         Map<String, Object> attributes = new HashMap<String, Object>();
         attributes.put(AttributesName.NAME, name);
         attributes.put(AttributesName.URL, url);
+        attributes.put(AttributesName.TYPE, RepositoryType.DIRECTORY);
         return new InternalAttributes(attributes);
     }
 

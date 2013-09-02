@@ -443,6 +443,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         Map<String, Object> attributes = new HashMap<String, Object>();
         attributes.put(AttributesName.NAME, name);
         attributes.put(AttributesName.URL, url);
+        attributes.put(AttributesName.TYPE, RepositoryType.MAVEN);
         return new InternalAttributes(attributes);
     }
 

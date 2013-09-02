@@ -33,4 +33,9 @@ public class RepositoryView implements Repository {
     public String getUrl() {
         return attributes.getAttribute(AttributesName.URL);
     }
+
+    @Override
+    public String getType() {
+        return attributes.getAttribute(AttributesName.TYPE);
+    }
 }

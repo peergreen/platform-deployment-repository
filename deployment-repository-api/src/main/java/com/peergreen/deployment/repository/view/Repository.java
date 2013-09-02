@@ -16,4 +16,5 @@ package com.peergreen.deployment.repository.view;
 public interface Repository {
     String getName();
     String getUrl();
+    String getType();
 }

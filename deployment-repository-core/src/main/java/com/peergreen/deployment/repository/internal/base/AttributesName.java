@@ -14,7 +14,8 @@ package com.peergreen.deployment.repository.internal.base;
  * @author Mohammed Boukada
  */
 public interface AttributesName {
-    final String NAME = "name";
-    final String URL = "url";
-    final String URLS = "urls";
+    final String NAME = "repository.name";
+    final String URL = "repository.url";
+    final String TYPE = "repository.type";
+    final String URLS = "repository.urls";
 }
