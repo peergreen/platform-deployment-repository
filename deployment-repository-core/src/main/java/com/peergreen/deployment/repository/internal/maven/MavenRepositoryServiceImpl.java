@@ -14,6 +14,7 @@ import com.peergreen.deployment.repository.Attributes;
 import com.peergreen.deployment.repository.BaseNode;
 import com.peergreen.deployment.repository.MavenRepositoryService;
 import com.peergreen.deployment.repository.Node;
+import com.peergreen.deployment.repository.RepositoryType;
 import com.peergreen.deployment.repository.internal.base.AttributesName;
 import com.peergreen.deployment.repository.internal.base.InternalAttributes;
 import com.peergreen.deployment.repository.internal.search.BaseQueryVisitor;
@@ -93,8 +94,8 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         plexusContainer = new DefaultPlexusContainer();
         indexer = plexusContainer.lookup(Indexer.class);
 
-        if (url.charAt(url.length() - 1) == '/') {
-            url = url.substring(0, url.length() - 1);
+        if (url.charAt(url.length() - 1) != '/') {
+            url += '/';
         }
         URL urlObject = new URL(url);
         File repoLocalCache = new File("repository/" + urlObject.getHost() + "/cache");
@@ -114,7 +115,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
 
             @Override
             public InputStream retrieve(String name) throws IOException {
-                return new URL(url + File.separator + ".index" + File.separator + name).openStream();
+                return new URL(url + ".index" + File.separator + name).openStream();
             }
         });
 
@@ -155,7 +156,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                     if (node != null) {
                         currentNode = node;
                     } else {
-                        URI newNodeUri = new URI(url + "/" + aSplitGroupId);
+                        URI newNodeUri = new URI(url + aSplitGroupId);
                         BaseNode newNodeData = new BaseNode(aSplitGroupId, newNodeUri, false);
                         IndexerNode<BaseNode> newNode = new IndexerNode<BaseNode>(newNodeData);
                         currentNode.addChild(newNode);
