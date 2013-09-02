@@ -19,6 +19,7 @@ import com.peergreen.deployment.repository.RepositoryService;
 import com.peergreen.deployment.repository.RepositoryType;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
 import com.peergreen.deployment.repository.view.Facade;
+import com.peergreen.deployment.repository.view.Repository;
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.ConfigurationException;
 import org.apache.felix.ipojo.Factory;
@@ -27,6 +28,7 @@ import org.apache.felix.ipojo.UnacceptableConfiguration;
 import org.apache.felix.ipojo.annotations.Bind;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
+import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Requires;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
@@ -56,8 +58,9 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
     Factory directoryRepositoryFactory;
     @Requires(from = "com.peergreen.deployment.repository.maven")
     Factory mavenRepositoryFactory;
-    private Map<String, ComponentInstance> repositoryInstances = new ConcurrentHashMap<>();
 
+    private Map<String, ComponentInstance> repositoryInstances = new ConcurrentHashMap<>();
+    private List<Repository> repositories = new CopyOnWriteArrayList<>();
     private List<RepositoryService> facadeRepositoryServices = new CopyOnWriteArrayList<RepositoryService>();
 
     protected IndexerGraph<BaseNode> listFiles(String filter) {
@@ -98,12 +101,20 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
         facadeRepositoryServices.remove(repositoryService);
     }
 
+    @Bind(optional = true, aggregate = true, filter = "(!(|(" + AttributesName.TYPE + "=" + RepositoryType.SUPER + ")" +
+                                                          "(" + AttributesName.TYPE + "=" + RepositoryType.FACADE + ")))")
+    public void bindRepository(RepositoryService repositoryService) {
+        repositories.add(repositoryService.getAttributes().as(Repository.class));
+    }
+
+    @Unbind
+    public void unbindRepository(RepositoryService repositoryService) {
+        repositories.remove(repositoryService.getAttributes().as(Repository.class));
+    }
+
     @Override
     public void addRepository(String url, String name, String type) {
-        if (url.charAt(url.length() - 1) == '/') {
-            url = url.substring(0, url.length() - 1);
-        }
-        if (!repositoryInstances.containsKey(url)) {
+        if (!containsRepository(url)) {
             Factory factory = null;
             switch (type) {
                 case RepositoryType.DIRECTORY:
@@ -134,6 +145,30 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
             repositoryInstances.get(url).stop();
             repositoryInstances.get(url).dispose();
             repositoryInstances.remove(url);
+        }
+    }
+
+    @Override
+    public List<Repository> getRepositories() {
+        return repositories;
+    }
+
+    @Invalidate
+    public void stop() {
+        for (Map.Entry<String, ComponentInstance> instance : repositoryInstances.entrySet()) {
+            removeRepository(instance.getKey());
+        }
+    }
+
+    private boolean containsRepository(String url) {
+        if (repositoryInstances.containsKey(url)) {
+            return true;
+        } else {
+            if (url.charAt(url.length() - 1) == '/') {
+                url = url.substring(0, url.length() - 1);
+                return repositoryInstances.containsKey(url);
+            }
+            return false;
         }
     }
 }
