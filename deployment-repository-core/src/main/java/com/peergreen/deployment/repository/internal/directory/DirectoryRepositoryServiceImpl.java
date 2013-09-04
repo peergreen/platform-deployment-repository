@@ -91,7 +91,9 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
             try {
                 file = new File(new URI(url));
             } catch (IllegalArgumentException e) {
-                if (!file.exists()) throw new FileNotFoundException("'" + url + "' not found.");
+                if (!file.exists()) {
+                    throw new FileNotFoundException("'" + url + "' not found.");
+                }
             }
         }
         if (!file.isDirectory()) {
@@ -120,9 +122,11 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
             for (File f : file.listFiles()) {
                 addFileToGraph(f, fileNode, filter, recursive);
             }
+
             if (filter != null && !"".equals(filter)
-                    && !file.getName().matches(filter) && fileNode.getChildren().size() > 0)
+                    && !file.getName().matches(filter) && fileNode.getChildren().size() > 0) {
                 node.addChild(fileNode);
+            }
         }
     }
 

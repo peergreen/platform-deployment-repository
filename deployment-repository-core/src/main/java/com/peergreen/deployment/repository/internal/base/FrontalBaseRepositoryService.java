@@ -55,9 +55,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class FrontalBaseRepositoryService implements RepositoryService, RepositoryManager {
 
     @Requires(from = "com.peergreen.deployment.repository.directory")
-    Factory directoryRepositoryFactory;
+    private Factory directoryRepositoryFactory;
     @Requires(from = "com.peergreen.deployment.repository.maven")
-    Factory mavenRepositoryFactory;
+    private Factory mavenRepositoryFactory;
 
     private Map<String, ComponentInstance> repositoryInstances = new ConcurrentHashMap<>();
     private List<Repository> repositories = new CopyOnWriteArrayList<>();
@@ -165,8 +165,8 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
             return true;
         } else {
             if (url.charAt(url.length() - 1) == '/') {
-                url = url.substring(0, url.length() - 1);
-                return repositoryInstances.containsKey(url);
+                String s = url.substring(0, url.length() - 1);
+                return repositoryInstances.containsKey(s);
             }
             return false;
         }

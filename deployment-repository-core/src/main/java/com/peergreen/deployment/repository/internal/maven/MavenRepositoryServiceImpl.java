@@ -50,6 +50,8 @@ import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.ow2.util.log.Log;
+import org.ow2.util.log.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,6 +78,11 @@ import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.V
 @Component(name = "com.peergreen.deployment.repository.maven")
 @Provides(properties = @StaticServiceProperty(name = "repository.type", type = "java.lang.String", mandatory = true))
 public class MavenRepositoryServiceImpl implements MavenRepositoryService {
+
+    /**
+     * Logger.
+     */
+    private static final Log LOGGER = LogFactory.getLog(MavenRepositoryServiceImpl.class);
 
     @Property(name = "repository.name")
     private String name;
@@ -535,17 +542,17 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
 
         public void init() throws ComponentLookupException, IOException {
             IndexUpdater indexUpdater = plexusContainer.lookup(IndexUpdater.class);
-            System.out.println( "Updating Index " + url + "..." );
-            System.out.println( "This might take a while on first run, so please be patient!" );
+            LOGGER.info( "Updating Index  ''{0}'' ...", url);
+            LOGGER.info( "This might take a while on first run, so please be patient!" );
             Date contextCurrentTimestamp = context.getTimestamp();
             IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
             if (updateResult.isFullUpdate()) {
-                System.out.println( "Full update happened!" );
+                LOGGER.info( "Full update happened!" );
             } else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
-                System.out.println( "No update needed, index is up to date!" );
+                LOGGER.info( "No update needed, index is up to date!" );
             } else {
-                System.out.println( "Incremental update happened, change covered " + contextCurrentTimestamp
-                        + " - " + updateResult.getTimestamp() + " period." );
+                LOGGER.info( "Incremental update happened, change covered ''{0}'' - ''{1}'' period.",
+                        contextCurrentTimestamp, updateResult.getTimestamp());
             }
             ready();
         }

@@ -34,7 +34,9 @@ public class IndexerGraph<T> extends SimpleGraph<T> implements Graph<T> {
     public IndexerNode<T> getNode(String nodeName) {
         for (Node<T> node : getNodes()) {
             BaseNode data = (BaseNode) node.getData();
-            if (nodeName.equals(data.getName())) return (IndexerNode<T>) node;
+            if (nodeName.equals(data.getName())) {
+                return (IndexerNode<T>) node;
+            }
         }
         return null;
     }

@@ -5,7 +5,7 @@ package com.peergreen.deployment.repository.search;
  */
 public class RepositoryQuery implements Query {
 
-    String[] repositories;
+    private String[] repositories;
 
     public RepositoryQuery(String... repositories) {
         this.repositories = repositories;
