@@ -104,7 +104,7 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
         return file;
     }
 
-    private void addFileToGraph(File file, IndexerNode<BaseNode> node, String filter, boolean recursive) {
+    private IndexerNode<BaseNode> addFileToGraph(File file, IndexerNode<BaseNode> node, String filter, boolean recursive) {
         BaseNode fileNodeData = new BaseNode(file.getName(), file.toURI(), !file.isDirectory());
         fileNodeData.setLastModified(file.lastModified());
         IndexerNode<BaseNode> fileNode = node.getNode(file.getName());
@@ -130,6 +130,7 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
                 node.addChild(fileNode);
             }
         }
+        return fileNode;
     }
 
     protected void setName(String name) {
@@ -149,8 +150,7 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
         if (uri != null) {
             IndexerNode<BaseNode> node = cache.getNode(uri);
             File file = new File(uri);
-            if (node != null && node.getChildren().size() > 0 &&
-                    file.exists() && file.lastModified() == node.getData().getLastModified()) {
+            if (node != null && node.getChildren().size() > 0 && !nodeWasModified(file, node)) {
                 return node.getChildren();
             } else {
                 addFileToGraph(uri, cache.getNode(name));
@@ -158,6 +158,12 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
             }
         }
         return null;
+    }
+
+    private boolean nodeWasModified(File file, IndexerNode<BaseNode> node) {
+        return file.exists() &&
+               (file.listFiles().length != node.getChildren().size()
+                       || file.lastModified() != node.getData().getLastModified());
     }
 
     private void addFileToGraph(URI uri, Node<BaseNode> rootNode) {
@@ -184,10 +190,19 @@ public class DirectoryRepositoryServiceImpl implements DirectoryRepositoryServic
 
             // add children
             if (!currentNode.getData().isLeaf()) {
+                List<Node<BaseNode>> children = new ArrayList<>(currentNode.getChildren());
                 for (File child : file.listFiles()) {
-                    addFileToGraph(child, currentNode, "", false);
+                    IndexerNode<BaseNode> node = addFileToGraph(child, currentNode, "", false);
+                    if (children.contains(node)) {
+                        children.remove(node);
+                    }
                 }
                 currentNode.getData().setLastModified(file.lastModified());
+
+                // Remaining children were removed
+                for (Node<BaseNode> child : children) {
+                    currentNode.getChildren().remove(child);
+                }
             }
         }
     }
