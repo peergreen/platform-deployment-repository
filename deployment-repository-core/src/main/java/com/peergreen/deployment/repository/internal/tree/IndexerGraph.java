@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2013 Peergreen S.A.S. All rights reserved.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -10,13 +10,13 @@
 
 package com.peergreen.deployment.repository.internal.tree;
 
+import java.net.URI;
+import java.util.Collection;
+
 import com.peergreen.deployment.repository.BaseNode;
 import com.peergreen.deployment.repository.Graph;
 import com.peergreen.deployment.repository.Node;
 import com.peergreen.deployment.repository.graph.SimpleGraph;
-
-import java.net.URI;
-import java.util.Collection;
 
 /**
  * @author Mohammed Boukada
