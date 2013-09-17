@@ -10,6 +10,21 @@
 
 package com.peergreen.deployment.repository.internal.directory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.felix.ipojo.annotations.Component;
+import org.apache.felix.ipojo.annotations.Property;
+import org.apache.felix.ipojo.annotations.Provides;
+import org.apache.felix.ipojo.annotations.StaticServiceProperty;
+import org.apache.felix.ipojo.annotations.Validate;
+
 import com.peergreen.deployment.repository.Attributes;
 import com.peergreen.deployment.repository.BaseNode;
 import com.peergreen.deployment.repository.DirectoryRepositoryService;
@@ -20,19 +35,6 @@ import com.peergreen.deployment.repository.internal.base.InternalAttributes;
 import com.peergreen.deployment.repository.internal.exception.NoDirectoryException;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
 import com.peergreen.deployment.repository.internal.tree.IndexerNode;
-import org.apache.felix.ipojo.annotations.Component;
-import org.apache.felix.ipojo.annotations.Property;
-import org.apache.felix.ipojo.annotations.Provides;
-import org.apache.felix.ipojo.annotations.StaticServiceProperty;
-import org.apache.felix.ipojo.annotations.Validate;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Mohammed Boukada
