@@ -181,6 +181,23 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
         return repositories;
     }
 
+    @Override
+    public void loadRepositoriesInCache() {
+        File repositoriesDirectory = new File("repository/");
+        if (repositoriesDirectory.exists() && repositoriesDirectory.isDirectory()) {
+            for (File repositoryDir : repositoriesDirectory.listFiles()) {
+                Properties props = new Properties();
+                File repositoryProperties = new File(repositoryDir.toString() + "/index/repository.properties");
+                try {
+                    props.load(new FileInputStream(repositoryProperties));
+                    addRepository(props.getProperty("repository.url"), props.getProperty("repository.name"), RepositoryType.MAVEN);
+                } catch (IOException e) {
+                    LOGGER.error("Cannot read repository properties for ''{0}''", repositoryDir.getName(), e);
+                }
+            }
+        }
+    }
+
     @Invalidate
     public void stop() {
         for (Map.Entry<String, ComponentInstance> instance : repositoryInstances.entrySet()) {

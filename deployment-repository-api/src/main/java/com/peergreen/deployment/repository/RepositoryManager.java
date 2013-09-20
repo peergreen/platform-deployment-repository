@@ -1,14 +1,15 @@
 package com.peergreen.deployment.repository;
 
-import com.peergreen.deployment.repository.view.Repository;
-
 import java.util.List;
+
+import com.peergreen.deployment.repository.view.Repository;
 
 /**
  * @author Mohammed Boukada
  */
 public interface RepositoryManager {
-    void addRepository(String url, String name, String type);
-    void removeRepository(String url);
+    boolean addRepository(String url, String name, String type);
+    boolean removeRepository(String url);
     List<Repository> getRepositories();
+    void loadRepositoriesInCache();
 }
