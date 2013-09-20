@@ -63,6 +63,11 @@ import com.peergreen.deployment.repository.view.Repository;
 @Provides(properties = @StaticServiceProperty(name = "repository.type", type = "java.lang.String", value = RepositoryType.SUPER, mandatory = true))
 public class FrontalBaseRepositoryService implements RepositoryService, RepositoryManager {
 
+    /**
+     * Logger.
+     */
+    private static final Log LOGGER = LogFactory.getLog(FrontalBaseRepositoryService.class);
+
     @Requires(from = "com.peergreen.deployment.repository.directory")
     private Factory directoryRepositoryFactory;
     @Requires(from = "com.peergreen.deployment.repository.maven")
@@ -71,6 +76,7 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
     private Map<String, ComponentInstance> repositoryInstances = new ConcurrentHashMap<>();
     private List<Repository> repositories = new CopyOnWriteArrayList<>();
     private List<RepositoryService> facadeRepositoryServices = new CopyOnWriteArrayList<RepositoryService>();
+    private DefaultPlexusContainer plexusContainer;
 
     protected IndexerGraph<BaseNode> listFiles(String filter) {
         Set<Node<BaseNode>> nodes = new HashSet<Node<BaseNode>>();
@@ -122,39 +128,52 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
     }
 
     @Override
-    public void addRepository(String url, String name, String type) {
+    public boolean addRepository(String url, String name, String type) {
         if (!containsRepository(url)) {
             Factory factory = null;
+            Dictionary<String, Object> properties = new Hashtable<>();
             switch (type) {
                 case RepositoryType.DIRECTORY:
                     factory = directoryRepositoryFactory;
                     break;
                 case RepositoryType.MAVEN:
                     factory = mavenRepositoryFactory;
+                    try {
+                        if (plexusContainer == null) {
+                            plexusContainer = new DefaultPlexusContainer();
+                        }
+                        properties.put("maven.plexus.container", plexusContainer);
+                    } catch (PlexusContainerException e) {
+                        LOGGER.error("Fail to create maven plexus container");
+                    }
             }
 
-            if (factory != null) {
-                Dictionary<String, Object> properties = new Hashtable<>();
+            if (factory != null && url != null) {
+
                 properties.put("repository.type", type);
-                properties.put("repository.name", name);
+                properties.put("repository.name", (name == null) ? url : name);
                 properties.put("repository.url", url);
                 try {
                     repositoryInstances.put(url, factory.createComponentInstance(properties));
-                } catch (UnacceptableConfiguration | MissingHandlerException | ConfigurationException unacceptableConfiguration) {
-                    // TODO use logger
-                    // Fail to add repository
+                } catch (UnacceptableConfiguration | MissingHandlerException | ConfigurationException e) {
+                    LOGGER.error("Fail to add repository ''{0}''", url, e);
+                    return false;
                 }
             }
+            return true;
         }
+        return false;
     }
 
     @Override
-    public void removeRepository(String url) {
+    public boolean removeRepository(String url) {
         if (repositoryInstances.containsKey(url)) {
             repositoryInstances.get(url).stop();
             repositoryInstances.get(url).dispose();
             repositoryInstances.remove(url);
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -171,7 +190,7 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
 
     private boolean containsRepository(String url) {
         if (repositoryInstances.containsKey(url)) {
-            return true;
+            return ComponentInstance.VALID == repositoryInstances.get(url).getState() || removeRepository(url);
         } else {
             if (url.charAt(url.length() - 1) == '/') {
                 String s = url.substring(0, url.length() - 1);

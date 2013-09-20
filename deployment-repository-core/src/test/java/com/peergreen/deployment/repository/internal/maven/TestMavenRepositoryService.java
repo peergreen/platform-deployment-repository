@@ -55,6 +55,7 @@ public class TestMavenRepositoryService {
         mavenRepositoryService = new MavenRepositoryServiceImpl();
         mavenRepositoryService.setUrl(PEERGREEN_PUBLIC_REPOSITORY);
         mavenRepositoryService.setName("Peergreen Public Repository");
+        mavenRepositoryService.setPlexusContainer(new DefaultPlexusContainer());
         mavenRepositoryService.init();
         Long start = System.currentTimeMillis();
         while (!mavenRepositoryService.isReady() && (System.currentTimeMillis() - start) < TIMEOUT) {

@@ -88,49 +88,64 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
      */
     private static final Log LOGGER = LogFactory.getLog(MavenRepositoryServiceImpl.class);
 
+    private static final String REPOSITORIES_FOLDER = "repository/";
+
     @Property(name = "repository.name")
     private String name;
     @Property(name = "repository.url", mandatory = true)
     private String url;
+    @Property(name = "maven.plexus.container", mandatory = true)
+    private PlexusContainer plexusContainer;
+
     @ServiceController
     private boolean isReady = false;
-
-    private PlexusContainer plexusContainer;
     private Indexer indexer;
     private IndexingContext context;
     private IndexerGraph<MavenNode> cache = new IndexerGraph<>();
 
     @Validate
     public void init() throws PlexusContainerException, ComponentLookupException, IOException {
-        plexusContainer = new DefaultPlexusContainer();
         indexer = plexusContainer.lookup(Indexer.class);
 
         if (url.charAt(url.length() - 1) != '/') {
             url += '/';
         }
+
         URL urlObject = new URL(url);
-        File repoLocalCache = new File("repository/" + urlObject.getHost() + "/cache");
-        File repoIndexDir = new File("repository/" + urlObject.getHost() + "/index");
+        String repositoryId = (urlObject.getHost() + urlObject.getPath()).replace('/', '.');
+        File repoLocalCache = new File(REPOSITORIES_FOLDER + repositoryId + "/cache");
+        File repoIndexDir = new File(REPOSITORIES_FOLDER + repositoryId + "/index");
+        boolean useCache = repoIndexDir.exists();
         List<IndexCreator> indexers = new ArrayList<IndexCreator>();
         indexers.add( plexusContainer.lookup(IndexCreator.class, "min") );
-        context = indexer.createIndexingContext("context", urlObject.getHost(), repoLocalCache, repoIndexDir, url, null, true, true, indexers);
+        context = indexer.createIndexingContext("context", repositoryId , repoLocalCache, repoIndexDir, url, null, true, true, indexers);
         IndexUpdateRequest updateRequest = new IndexUpdateRequest(context, new ResourceFetcher() {
+
+            private String url;
+            private Long startTime;
+
             @Override
             public void connect(String id, String url) throws IOException {
-
+                this.url = url;
+                this.startTime = System.currentTimeMillis();
+                LOGGER.info(String.format("Connecting to %s", url));
             }
 
             @Override
             public void disconnect() throws IOException {
+                LOGGER.info(String.format("Disconnecting from %s. Fetching time : %s%n",
+                        url, printDuration(System.currentTimeMillis() - startTime)));
             }
 
             @Override
             public InputStream retrieve(String name) throws IOException {
-                return new URL(url + ".index" + File.separator + name).openStream();
+                String fileName = url + File.separator + name;
+                LOGGER.info(String.format("Downloading %s ...", fileName));
+                return new URL(fileName).openStream();
             }
         });
 
-        MavenIndexUpdater mavenIndexUpdater = new MavenIndexUpdater(updateRequest);
+        MavenIndexUpdater mavenIndexUpdater = new MavenIndexUpdater(updateRequest, useCache, repoIndexDir);
         mavenIndexUpdater.start();
     }
 
@@ -235,7 +250,9 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         try {
             // add root element
             MavenNode root = new MavenNode(name, new URI(url), false, new MavenArtifactInfo(url, null, null, null, null, REPOSITORY));
-            root.setLastModified(context.getTimestamp().getTime());
+            if (context.getTimestamp() != null) {
+                root.setLastModified(context.getTimestamp().getTime());
+            }
             IndexerNode<MavenNode> rootNode = new IndexerNode<MavenNode>(root);
             graph.addNode(rootNode);
 
@@ -493,8 +510,12 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         this.name = name;
     }
 
+    protected void setPlexusContainer(PlexusContainer plexusContainer) {
+        this.plexusContainer = plexusContainer;
+    }
+
     protected void closeIndexingContext() throws IOException {
-        indexer.closeIndexingContext(context, true);
+        indexer.closeIndexingContext(context, false);
     }
 
     protected IndexerGraph<MavenNode> getCache(boolean refresh) {
@@ -523,16 +544,35 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
                 }
             }
         } catch (IOException | URISyntaxException e) {
-            // TODO use logger
+            LOGGER.error(e);
+        }
+    }
+
+    private void storeRepositoryProperties(String propertiesFile) {
+
+        Properties prop = new Properties();
+
+        try {
+            prop.setProperty("repository.name", name);
+            prop.setProperty("repository.url", url);
+            prop.store(new FileOutputStream(propertiesFile), null);
+
+        } catch (IOException e) {
+            LOGGER.error("Fail to store repository properties for ''{0}''", url, e);
         }
     }
 
     private class MavenIndexUpdater extends Thread {
 
         private IndexUpdateRequest updateRequest;
+        private File repoIndexCache;
 
-        public MavenIndexUpdater(IndexUpdateRequest updateRequest) {
+        public MavenIndexUpdater(IndexUpdateRequest updateRequest, boolean useCache, File repoIndexCache) {
             this.updateRequest = updateRequest;
+            this.repoIndexCache = repoIndexCache;
+            if (useCache) {
+                this.updateRequest.setCacheOnly(true);
+            }
         }
 
         @Override
@@ -540,25 +580,62 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
             try {
                 init();
             } catch (ComponentLookupException | IOException e) {
-                // TODO user logger
+                LOGGER.error(e);
             }
         }
 
         public void init() throws ComponentLookupException, IOException {
             IndexUpdater indexUpdater = plexusContainer.lookup(IndexUpdater.class);
-            LOGGER.info( "Updating Index  ''{0}'' ...", url);
+            LOGGER.info( String.format("Updating Index  '%s' ...", url));
             LOGGER.info( "This might take a while on first run, so please be patient!" );
-            Date contextCurrentTimestamp = context.getTimestamp();
-            IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
-            if (updateResult.isFullUpdate()) {
-                LOGGER.info( "Full update happened!" );
-            } else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
-                LOGGER.info( "No update needed, index is up to date!" );
-            } else {
-                LOGGER.info( "Incremental update happened, change covered ''{0}'' - ''{1}'' period.",
-                        contextCurrentTimestamp, updateResult.getTimestamp());
-            }
+            indexUpdater.fetchAndUpdateIndex(updateRequest);
+            storeRepositoryProperties(repoIndexCache.toString() + File.separator + "repository.properties");
             ready();
         }
+    }
+
+    public static String printDuration(double uptime) {
+
+        // Not available
+        if (uptime == 0 || uptime == -1) {
+            return "N/A";
+        }
+
+        // Code taken from Karaf
+        // https://svn.apache.org/repos/asf/felix/trunk/karaf/shell/commands/src/main/java/org/apache/felix/karaf/shell/commands/InfoAction.java
+
+        NumberFormat fmtI = new DecimalFormat("###,###", new DecimalFormatSymbols(Locale.ENGLISH));
+        NumberFormat fmtD = new DecimalFormat("###,##0.000", new DecimalFormatSymbols(Locale.ENGLISH));
+
+        if (uptime < 1000) {
+            return fmtI.format(uptime) + " ms";
+        }
+        uptime /= 1000;
+        if (uptime < 60) {
+            return fmtD.format(uptime) + " seconds";
+        }
+        uptime /= 60;
+        if (uptime < 60) {
+            long minutes = (long) uptime;
+            return fmtI.format(minutes) + (minutes > 1 ? " minutes" : " minute");
+        }
+        uptime /= 60;
+        if (uptime < 24) {
+            long hours = (long) uptime;
+            long minutes = (long) ((uptime - hours) * 60);
+            String s = fmtI.format(hours) + (hours > 1 ? " hours" : " hour");
+            if (minutes != 0) {
+                s += " " + fmtI.format(minutes) + (minutes > 1 ? " minutes" : "minute");
+            }
+            return s;
+        }
+        uptime /= 24;
+        long days = (long) uptime;
+        long hours = (long) ((uptime - days) * 60);
+        String s = fmtI.format(days) + (days > 1 ? " days" : " day");
+        if (hours != 0) {
+            s += " " + fmtI.format(hours) + (hours > 1 ? " hours" : "hour");
+        }
+        return s;
     }
 }
