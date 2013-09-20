@@ -10,16 +10,22 @@
 
 package com.peergreen.deployment.repository.internal.base;
 
-import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.BaseNode;
-import com.peergreen.deployment.repository.Graph;
-import com.peergreen.deployment.repository.Node;
-import com.peergreen.deployment.repository.RepositoryManager;
-import com.peergreen.deployment.repository.RepositoryService;
-import com.peergreen.deployment.repository.RepositoryType;
-import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
-import com.peergreen.deployment.repository.view.Facade;
-import com.peergreen.deployment.repository.view.Repository;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.ConfigurationException;
 import org.apache.felix.ipojo.Factory;
@@ -33,18 +39,21 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Requires;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
 import org.apache.felix.ipojo.annotations.Unbind;
+import org.codehaus.plexus.DefaultPlexusContainer;
+import org.codehaus.plexus.PlexusContainerException;
+import org.ow2.util.log.Log;
+import org.ow2.util.log.LogFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import com.peergreen.deployment.repository.Attributes;
+import com.peergreen.deployment.repository.BaseNode;
+import com.peergreen.deployment.repository.Graph;
+import com.peergreen.deployment.repository.Node;
+import com.peergreen.deployment.repository.RepositoryManager;
+import com.peergreen.deployment.repository.RepositoryService;
+import com.peergreen.deployment.repository.RepositoryType;
+import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
+import com.peergreen.deployment.repository.view.Facade;
+import com.peergreen.deployment.repository.view.Repository;
 
 /**
  * @author Mohammed Boukada

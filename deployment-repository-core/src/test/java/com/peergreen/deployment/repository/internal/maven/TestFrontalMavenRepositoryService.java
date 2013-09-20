@@ -10,11 +10,14 @@
 
 package com.peergreen.deployment.repository.internal.maven;
 
-import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
-import com.peergreen.deployment.repository.maven.MavenNode;
-import com.peergreen.deployment.repository.view.Facade;
-import com.peergreen.deployment.repository.view.Repository;
+import static com.peergreen.deployment.repository.internal.maven.Constants.OW2_PUBLIC_REPOSITORY;
+import static com.peergreen.deployment.repository.internal.maven.Constants.PEERGREEN_PUBLIC_REPOSITORY;
+import static com.peergreen.deployment.repository.internal.maven.Constants.TIMEOUT;
+
+import java.io.IOException;
+
+import org.codehaus.plexus.DefaultPlexusContainer;
+import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.testng.Assert;
@@ -22,11 +25,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-
-import static com.peergreen.deployment.repository.internal.maven.Constants.OW2_PUBLIC_REPOSITORY;
-import static com.peergreen.deployment.repository.internal.maven.Constants.PEERGREEN_PUBLIC_REPOSITORY;
-import static com.peergreen.deployment.repository.internal.maven.Constants.TIMEOUT;
+import com.peergreen.deployment.repository.Attributes;
+import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
+import com.peergreen.deployment.repository.maven.MavenNode;
+import com.peergreen.deployment.repository.view.Facade;
+import com.peergreen.deployment.repository.view.Repository;
 
 /**
  * @author Mohammed Boukada

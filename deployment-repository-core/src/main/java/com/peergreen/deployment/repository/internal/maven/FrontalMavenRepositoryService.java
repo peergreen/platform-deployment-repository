@@ -10,26 +10,6 @@
 
 package com.peergreen.deployment.repository.internal.maven;
 
-import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.BaseNode;
-import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
-import com.peergreen.deployment.repository.maven.MavenNode;
-import com.peergreen.deployment.repository.MavenRepositoryService;
-import com.peergreen.deployment.repository.Node;
-import com.peergreen.deployment.repository.RepositoryType;
-import com.peergreen.deployment.repository.internal.base.AttributesName;
-import com.peergreen.deployment.repository.internal.base.InternalAttributes;
-import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
-import com.peergreen.deployment.repository.search.Query;
-import com.peergreen.deployment.repository.search.RepositoryQuery;
-import com.peergreen.deployment.repository.view.Repository;
-import org.apache.felix.ipojo.annotations.Bind;
-import org.apache.felix.ipojo.annotations.Component;
-import org.apache.felix.ipojo.annotations.Instantiate;
-import org.apache.felix.ipojo.annotations.Provides;
-import org.apache.felix.ipojo.annotations.StaticServiceProperty;
-import org.apache.felix.ipojo.annotations.Unbind;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,6 +19,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.felix.ipojo.annotations.Bind;
+import org.apache.felix.ipojo.annotations.Component;
+import org.apache.felix.ipojo.annotations.Instantiate;
+import org.apache.felix.ipojo.annotations.Provides;
+import org.apache.felix.ipojo.annotations.StaticServiceProperty;
+import org.apache.felix.ipojo.annotations.Unbind;
+
+import com.peergreen.deployment.repository.Attributes;
+import com.peergreen.deployment.repository.BaseNode;
+import com.peergreen.deployment.repository.MavenRepositoryService;
+import com.peergreen.deployment.repository.Node;
+import com.peergreen.deployment.repository.RepositoryType;
+import com.peergreen.deployment.repository.internal.base.AttributesName;
+import com.peergreen.deployment.repository.internal.base.InternalAttributes;
+import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
+import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
+import com.peergreen.deployment.repository.maven.MavenNode;
+import com.peergreen.deployment.repository.search.Query;
+import com.peergreen.deployment.repository.search.RepositoryQuery;
+import com.peergreen.deployment.repository.view.Repository;
 
 /**
  * @author Mohammed Boukada

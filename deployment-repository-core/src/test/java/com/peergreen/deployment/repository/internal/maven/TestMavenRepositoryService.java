@@ -10,25 +10,8 @@
 
 package com.peergreen.deployment.repository.internal.maven;
 
-import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
-import com.peergreen.deployment.repository.internal.tree.IndexerNode;
-import com.peergreen.deployment.repository.maven.MavenNode;
-import com.peergreen.deployment.repository.search.Queries;
-import com.peergreen.deployment.repository.search.Query;
-import com.peergreen.deployment.repository.view.Repository;
-import org.codehaus.plexus.PlexusContainerException;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import static com.peergreen.deployment.repository.internal.maven.Constants.*;
+import static com.peergreen.deployment.repository.internal.maven.Constants.PEERGREEN_PUBLIC_REPOSITORY;
+import static com.peergreen.deployment.repository.internal.maven.Constants.TIMEOUT;
 import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARCHIVE;
 import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARTIFACT_ID;
 import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.GROUP_ID;
@@ -39,6 +22,26 @@ import static com.peergreen.deployment.repository.search.Queries.artifactId;
 import static com.peergreen.deployment.repository.search.Queries.eq;
 import static com.peergreen.deployment.repository.search.Queries.groupId;
 import static com.peergreen.deployment.repository.search.Queries.or;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.codehaus.plexus.DefaultPlexusContainer;
+import org.codehaus.plexus.PlexusContainerException;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.peergreen.deployment.repository.Attributes;
+import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
+import com.peergreen.deployment.repository.internal.tree.IndexerNode;
+import com.peergreen.deployment.repository.maven.MavenNode;
+import com.peergreen.deployment.repository.search.Queries;
+import com.peergreen.deployment.repository.search.Query;
+import com.peergreen.deployment.repository.view.Repository;
 
 /**
  * @author Mohammed Boukada

@@ -10,12 +10,12 @@
 
 package com.peergreen.deployment.repository;
 
+import java.net.URI;
+import java.util.List;
+
 import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
 import com.peergreen.deployment.repository.maven.MavenNode;
 import com.peergreen.deployment.repository.search.Query;
-
-import java.net.URI;
-import java.util.List;
 
 /**
  * @author Mohammed Boukada

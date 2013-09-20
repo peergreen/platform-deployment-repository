@@ -10,20 +10,30 @@
 
 package com.peergreen.deployment.repository.internal.maven;
 
-import com.peergreen.deployment.repository.Attributes;
-import com.peergreen.deployment.repository.BaseNode;
-import com.peergreen.deployment.repository.MavenRepositoryService;
-import com.peergreen.deployment.repository.Node;
-import com.peergreen.deployment.repository.RepositoryType;
-import com.peergreen.deployment.repository.internal.base.AttributesName;
-import com.peergreen.deployment.repository.internal.base.InternalAttributes;
-import com.peergreen.deployment.repository.internal.search.BaseQueryVisitor;
-import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
-import com.peergreen.deployment.repository.internal.tree.IndexerNode;
-import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
-import com.peergreen.deployment.repository.maven.MavenNode;
-import com.peergreen.deployment.repository.search.Queries;
-import com.peergreen.deployment.repository.search.RepositoryQuery;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARCHIVE;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARTIFACT_ID;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.GROUP_ID;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.REPOSITORY;
+import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.VERSION;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Property;
@@ -43,34 +53,28 @@ import org.apache.maven.index.IteratorSearchResponse;
 import org.apache.maven.index.context.IndexCreator;
 import org.apache.maven.index.context.IndexingContext;
 import org.apache.maven.index.updater.IndexUpdateRequest;
-import org.apache.maven.index.updater.IndexUpdateResult;
 import org.apache.maven.index.updater.IndexUpdater;
 import org.apache.maven.index.updater.ResourceFetcher;
-import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.ow2.util.log.Log;
 import org.ow2.util.log.LogFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARCHIVE;
-import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.ARTIFACT_ID;
-import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.GROUP_ID;
-import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.REPOSITORY;
-import static com.peergreen.deployment.repository.maven.MavenArtifactInfo.Type.VERSION;
+import com.peergreen.deployment.repository.Attributes;
+import com.peergreen.deployment.repository.BaseNode;
+import com.peergreen.deployment.repository.MavenRepositoryService;
+import com.peergreen.deployment.repository.Node;
+import com.peergreen.deployment.repository.RepositoryType;
+import com.peergreen.deployment.repository.internal.base.AttributesName;
+import com.peergreen.deployment.repository.internal.base.InternalAttributes;
+import com.peergreen.deployment.repository.internal.search.BaseQueryVisitor;
+import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
+import com.peergreen.deployment.repository.internal.tree.IndexerNode;
+import com.peergreen.deployment.repository.maven.MavenArtifactInfo;
+import com.peergreen.deployment.repository.maven.MavenNode;
+import com.peergreen.deployment.repository.search.Queries;
+import com.peergreen.deployment.repository.search.RepositoryQuery;
 
 /**
  * @author Mohammed Boukada
