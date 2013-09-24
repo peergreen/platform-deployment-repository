@@ -39,7 +39,6 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Requires;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
 import org.apache.felix.ipojo.annotations.Unbind;
-import org.codehaus.plexus.DefaultPlexusContainer;
 import org.ow2.util.log.Log;
 import org.ow2.util.log.LogFactory;
 
@@ -76,7 +75,6 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
     private Map<String, ComponentInstance> repositoryInstances = new ConcurrentHashMap<>();
     private List<Repository> repositories = new CopyOnWriteArrayList<>();
     private List<RepositoryService> facadeRepositoryServices = new CopyOnWriteArrayList<RepositoryService>();
-    private DefaultPlexusContainer plexusContainer;
 
     protected IndexerGraph<BaseNode> listFiles(String filter) {
         Set<Node<BaseNode>> nodes = new HashSet<Node<BaseNode>>();

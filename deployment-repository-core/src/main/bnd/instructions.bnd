@@ -1,11 +1,21 @@
-Private-Package org.apache.lucene.*,\
-                org.apache.maven.*,\
-                org.codehaus.plexus.*,\
-                org.sonatype.aether.*,\
-                org.sonatype.guice.*,\
-                com.google.inject.*,\
-                javax.inject.*,\
-                org.sonatype.inject.*,\
+Private-Package org.apache.lucene,\
+                org.apache.lucene.index.*,\
+                org.apache.lucene.search.*,\
+                org.apache.lucene.document,\
+                org.apache.lucene.util,\
+                org.apache.lucene.util.packed,\
+                org.apache.lucene.analysis,\
+                org.apache.lucene.analysis.tokenattributes,\
+                org.apache.lucene.store,\
+                org.apache.maven.index.*,\
+                org.codehaus.plexus.logging.*,\
+                org.codehaus.plexus.util,\
+                org.codehaus.plexus.util.io,\
+                org.codehaus.plexus.util.dag,\
+                org.codehaus.plexus.configuration,\
+                org.sonatype.aether,\
+                org.sonatype.aether.version,\
+                org.sonatype.aether.util.version,\
                 com.peergreen.deployment.repository.graph.*,\
                 com.peergreen.deployment.repository.node.*,\
                 com.peergreen.deployment.repository.internal.*

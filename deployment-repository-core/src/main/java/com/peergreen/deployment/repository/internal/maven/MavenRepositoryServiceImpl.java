@@ -59,8 +59,6 @@ import org.apache.maven.index.updater.DefaultIndexUpdater;
 import org.apache.maven.index.updater.IndexUpdateRequest;
 import org.apache.maven.index.updater.ResourceFetcher;
 import org.apache.maven.index.util.IndexCreatorSorter;
-import org.codehaus.plexus.PlexusContainerException;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.ow2.util.log.Log;
 import org.ow2.util.log.LogFactory;
@@ -105,7 +103,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
     private IndexerGraph<MavenNode> cache = new IndexerGraph<>();
 
     @Validate
-    public void init() throws PlexusContainerException, IOException, ComponentLookupException {
+    public void init() throws IOException {
         URL urlObject = new URL(url);
         String repositoryId = (urlObject.getHost() + urlObject.getPath()).replace('/', '.');
         File repoLocalCache = new File(REPOSITORIES_FOLDER + repositoryId + "/cache");
@@ -579,12 +577,12 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         public void run() {
             try {
                 init();
-            } catch (ComponentLookupException | IOException e) {
+            } catch (IOException e) {
                 LOGGER.error(e);
             }
         }
 
-        public void init() throws ComponentLookupException, IOException {
+        public void init() throws IOException {
             DefaultIncrementalHandler handler = new DefaultIncrementalHandler();
             DefaultIndexUpdater indexUpdater = new DefaultIndexUpdater(handler, null);
             indexUpdater.enableLogging(new ConsoleLogger());
