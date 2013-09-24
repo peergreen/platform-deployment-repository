@@ -10,5 +10,4 @@ Private-Package org.apache.lucene.*,\
                 com.peergreen.deployment.repository.node.*,\
                 com.peergreen.deployment.repository.internal.*
 
-Embed-Dependency artifactId=indexer-core;inline=false
 Import-Package *;resolution:=optional

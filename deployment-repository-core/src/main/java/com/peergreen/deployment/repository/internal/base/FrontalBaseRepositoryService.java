@@ -40,7 +40,6 @@ import org.apache.felix.ipojo.annotations.Requires;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
 import org.apache.felix.ipojo.annotations.Unbind;
 import org.codehaus.plexus.DefaultPlexusContainer;
-import org.codehaus.plexus.PlexusContainerException;
 import org.ow2.util.log.Log;
 import org.ow2.util.log.LogFactory;
 
@@ -51,6 +50,7 @@ import com.peergreen.deployment.repository.Node;
 import com.peergreen.deployment.repository.RepositoryManager;
 import com.peergreen.deployment.repository.RepositoryService;
 import com.peergreen.deployment.repository.RepositoryType;
+import com.peergreen.deployment.repository.internal.maven.MavenRepositoryServiceImpl;
 import com.peergreen.deployment.repository.internal.tree.IndexerGraph;
 import com.peergreen.deployment.repository.view.Facade;
 import com.peergreen.deployment.repository.view.Repository;
@@ -138,18 +138,10 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
                     break;
                 case RepositoryType.MAVEN:
                     factory = mavenRepositoryFactory;
-                    try {
-                        if (plexusContainer == null) {
-                            plexusContainer = new DefaultPlexusContainer();
-                        }
-                        properties.put("maven.plexus.container", plexusContainer);
-                    } catch (PlexusContainerException e) {
-                        LOGGER.error("Fail to create maven plexus container");
-                    }
+                    break;
             }
 
             if (factory != null && url != null) {
-
                 properties.put("repository.type", type);
                 properties.put("repository.name", (name == null) ? url : name);
                 properties.put("repository.url", url);
@@ -183,16 +175,20 @@ public class FrontalBaseRepositoryService implements RepositoryService, Reposito
 
     @Override
     public void loadRepositoriesInCache() {
-        File repositoriesDirectory = new File("repository/");
+        File repositoriesDirectory = new File(MavenRepositoryServiceImpl.REPOSITORIES_FOLDER);
         if (repositoriesDirectory.exists() && repositoriesDirectory.isDirectory()) {
             for (File repositoryDir : repositoriesDirectory.listFiles()) {
-                Properties props = new Properties();
-                File repositoryProperties = new File(repositoryDir.toString() + "/index/repository.properties");
-                try {
-                    props.load(new FileInputStream(repositoryProperties));
-                    addRepository(props.getProperty("repository.url"), props.getProperty("repository.name"), RepositoryType.MAVEN);
-                } catch (IOException e) {
-                    LOGGER.error("Cannot read repository properties for ''{0}''", repositoryDir.getName(), e);
+                if (repositoryDir.isDirectory()) {
+                    Properties props = new Properties();
+                    File repositoryProperties = new File(repositoryDir.toString() + "/index/repository.properties");
+                    try {
+                        props.load(new FileInputStream(repositoryProperties));
+                        addRepository(props.getProperty("repository.url"),
+                                      props.getProperty("repository.name"),
+                                      props.getProperty("repository.type"));
+                    } catch (IOException e) {
+                        LOGGER.error("Cannot read repository properties for ''{0}''", repositoryDir.getName(), e);
+                    }
                 }
             }
         }

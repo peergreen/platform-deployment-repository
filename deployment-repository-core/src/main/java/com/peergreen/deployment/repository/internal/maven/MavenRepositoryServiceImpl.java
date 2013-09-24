@@ -47,17 +47,21 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.maven.index.ArtifactInfo;
-import org.apache.maven.index.Indexer;
+import org.apache.maven.index.DefaultSearchEngine;
 import org.apache.maven.index.IteratorSearchRequest;
 import org.apache.maven.index.IteratorSearchResponse;
+import org.apache.maven.index.context.DefaultIndexingContext;
 import org.apache.maven.index.context.IndexCreator;
 import org.apache.maven.index.context.IndexingContext;
+import org.apache.maven.index.creator.MinimalArtifactInfoIndexCreator;
+import org.apache.maven.index.incremental.DefaultIncrementalHandler;
+import org.apache.maven.index.updater.DefaultIndexUpdater;
 import org.apache.maven.index.updater.IndexUpdateRequest;
-import org.apache.maven.index.updater.IndexUpdater;
 import org.apache.maven.index.updater.ResourceFetcher;
-import org.codehaus.plexus.PlexusContainer;
+import org.apache.maven.index.util.IndexCreatorSorter;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.ow2.util.log.Log;
 import org.ow2.util.log.LogFactory;
 
@@ -88,37 +92,29 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
      */
     private static final Log LOGGER = LogFactory.getLog(MavenRepositoryServiceImpl.class);
 
-    private static final String REPOSITORIES_FOLDER = "repository/";
+    public static final String REPOSITORIES_FOLDER = "repositories/";
 
     @Property(name = "repository.name")
     private String name;
     @Property(name = "repository.url", mandatory = true)
     private String url;
-    @Property(name = "maven.plexus.container", mandatory = true)
-    private PlexusContainer plexusContainer;
-
     @ServiceController
     private boolean isReady = false;
-    private Indexer indexer;
+
     private IndexingContext context;
     private IndexerGraph<MavenNode> cache = new IndexerGraph<>();
 
     @Validate
-    public void init() throws PlexusContainerException, ComponentLookupException, IOException {
-        indexer = plexusContainer.lookup(Indexer.class);
-
-        if (url.charAt(url.length() - 1) != '/') {
-            url += '/';
-        }
-
+    public void init() throws PlexusContainerException, IOException, ComponentLookupException {
         URL urlObject = new URL(url);
         String repositoryId = (urlObject.getHost() + urlObject.getPath()).replace('/', '.');
         File repoLocalCache = new File(REPOSITORIES_FOLDER + repositoryId + "/cache");
         File repoIndexDir = new File(REPOSITORIES_FOLDER + repositoryId + "/index");
         boolean useCache = repoIndexDir.exists();
         List<IndexCreator> indexers = new ArrayList<IndexCreator>();
-        indexers.add( plexusContainer.lookup(IndexCreator.class, "min") );
-        context = indexer.createIndexingContext("context", repositoryId , repoLocalCache, repoIndexDir, url, null, true, true, indexers);
+        indexers.add(new MinimalArtifactInfoIndexCreator());
+        context = new DefaultIndexingContext(name, repositoryId, repoLocalCache, repoIndexDir, url, null, IndexCreatorSorter.sort(indexers), true );
+        context.setSearchable(true);
         IndexUpdateRequest updateRequest = new IndexUpdateRequest(context, new ResourceFetcher() {
 
             private String url;
@@ -494,8 +490,14 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
     }
 
     private IteratorSearchResponse process(Query query) throws IOException {
+        DefaultSearchEngine searchEngine = new DefaultSearchEngine();
+        searchEngine.enableLogging(new ConsoleLogger());
         final IteratorSearchRequest request = new IteratorSearchRequest(query, Collections.singletonList(context));
-        return indexer.searchIterator(request);
+        if (request.getContexts().isEmpty()) {
+            return IteratorSearchResponse.empty( request.getQuery() );
+        } else {
+            return searchEngine.forceSearchIteratorPaged(request, request.getContexts());
+        }
     }
 
     private String[] splitGroupId(String groupId) {
@@ -510,12 +512,9 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         this.name = name;
     }
 
-    protected void setPlexusContainer(PlexusContainer plexusContainer) {
-        this.plexusContainer = plexusContainer;
-    }
-
     protected void closeIndexingContext() throws IOException {
-        indexer.closeIndexingContext(context, false);
+//        indexer.closeIndexingContext(context, false);
+        context.close(false);
     }
 
     protected IndexerGraph<MavenNode> getCache(boolean refresh) {
@@ -555,6 +554,7 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         try {
             prop.setProperty("repository.name", name);
             prop.setProperty("repository.url", url);
+            prop.setProperty("repository.type", RepositoryType.MAVEN);
             prop.store(new FileOutputStream(propertiesFile), null);
 
         } catch (IOException e) {
@@ -585,7 +585,9 @@ public class MavenRepositoryServiceImpl implements MavenRepositoryService {
         }
 
         public void init() throws ComponentLookupException, IOException {
-            IndexUpdater indexUpdater = plexusContainer.lookup(IndexUpdater.class);
+            DefaultIncrementalHandler handler = new DefaultIncrementalHandler();
+            DefaultIndexUpdater indexUpdater = new DefaultIndexUpdater(handler, null);
+            indexUpdater.enableLogging(new ConsoleLogger());
             LOGGER.info( String.format("Updating Index  '%s' ...", url));
             LOGGER.info( "This might take a while on first run, so please be patient!" );
             indexUpdater.fetchAndUpdateIndex(updateRequest);

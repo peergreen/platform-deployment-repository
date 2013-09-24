@@ -16,8 +16,6 @@ import static com.peergreen.deployment.repository.internal.maven.Constants.TIMEO
 
 import java.io.IOException;
 
-import org.codehaus.plexus.DefaultPlexusContainer;
-import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.testng.Assert;
@@ -44,12 +42,10 @@ public class TestFrontalMavenRepositoryService {
     @BeforeClass
     public void configure() throws PlexusContainerException, ComponentLookupException, IOException, InterruptedException {
         frontalMavenRepositoryService = new FrontalMavenRepositoryService();
-        PlexusContainer plexusContainer = new DefaultPlexusContainer();
 
         mavenRepositoryService1 = new MavenRepositoryServiceImpl();
         mavenRepositoryService1.setUrl(PEERGREEN_PUBLIC_REPOSITORY);
         mavenRepositoryService1.setName("Peergreen Public Repository");
-        mavenRepositoryService1.setPlexusContainer(plexusContainer);
         mavenRepositoryService1.init();
         Long start = System.currentTimeMillis();
         while (!mavenRepositoryService1.isReady() && (System.currentTimeMillis() - start) < TIMEOUT ) {
@@ -60,7 +56,6 @@ public class TestFrontalMavenRepositoryService {
         mavenRepositoryService2 = new MavenRepositoryServiceImpl();
         mavenRepositoryService2.setUrl(OW2_PUBLIC_REPOSITORY);
         mavenRepositoryService2.setName("OW2 Public Repository");
-        mavenRepositoryService2.setPlexusContainer(plexusContainer);
         mavenRepositoryService2.init();
         start = System.currentTimeMillis();
         while (!mavenRepositoryService2.isReady() && (System.currentTimeMillis() - start) < TIMEOUT ) {

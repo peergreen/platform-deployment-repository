@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.testng.Assert;
@@ -55,7 +54,6 @@ public class TestMavenRepositoryService {
         mavenRepositoryService = new MavenRepositoryServiceImpl();
         mavenRepositoryService.setUrl(PEERGREEN_PUBLIC_REPOSITORY);
         mavenRepositoryService.setName("Peergreen Public Repository");
-        mavenRepositoryService.setPlexusContainer(new DefaultPlexusContainer());
         mavenRepositoryService.init();
         Long start = System.currentTimeMillis();
         while (!mavenRepositoryService.isReady() && (System.currentTimeMillis() - start) < TIMEOUT) {
