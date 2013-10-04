@@ -16,7 +16,7 @@
   <parent>
     <groupId>com.peergreen</groupId>
     <artifactId>peergreen-pom</artifactId>
-    <version>3</version>
+    <version>3.1</version>
   </parent>
   <groupId>com.peergreen.deployment</groupId>
   <artifactId>deployment-repository</artifactId>
@@ -29,5 +29,12 @@
     <module>deployment-repository-api</module>
     <module>deployment-repository-core</module>
   </modules>
+
+  <scm>
+    <connection>scm:git:https://forge.peergreen.com/git/git/platform/deployment-repository.git</connection>
+    <developerConnection>scm:git:https://forge.peergreen.com/git/git/platform/deployment-repository.git</developerConnection>
+    <url>https://forge.peergreen.com/git/summary/?r=platform/deployment-repository.git</url>
+    <tag>HEAD</tag>
+  </scm>
 
 </project>
