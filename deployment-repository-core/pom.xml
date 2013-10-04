@@ -14,10 +14,10 @@
     <parent>
       <groupId>com.peergreen.deployment</groupId>
       <artifactId>deployment-repository</artifactId>
-      <version>1.0.0-M1</version>
+      <version>1.0.0-M2-SNAPSHOT</version>
     </parent>
     <artifactId>deployment-repository-core</artifactId>
-    <version>1.0.0-M1</version>
+    <version>1.0.0-M2-SNAPSHOT</version>
     <name>Peergreen Deployment Repository Fetcher Core</name>
     <packaging>bundle</packaging>
 
